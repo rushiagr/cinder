@@ -32,6 +32,7 @@ from cinder.openstack.common import excutils
 from cinder.openstack.common import importutils
 from cinder.openstack.common import log as logging
 from cinder.openstack.common.notifier import api as notifier
+from cinder.share import rpcapi as share_rpcapi
 from cinder.volume import rpcapi as volume_rpcapi
 
 LOG = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ FLAGS.register_opt(scheduler_driver_opt)
 class SchedulerManager(manager.Manager):
     """Chooses a host to create volumes."""
 
-    RPC_API_VERSION = '1.2'
+    RPC_API_VERSION = '1.3'
 
     def __init__(self, scheduler_driver=None, service_name=None,
                  *args, **kwargs):
@@ -114,6 +115,42 @@ class SchedulerManager(manager.Manager):
                                                   volume_state,
                                                   context, ex, request_spec)
 
+    def create_share(self, context, topic, share_id, snapshot_id=None,
+                     request_spec=None, filter_properties=None):
+        try:
+            self.driver.schedule_create_share(context, request_spec,
+                                              filter_properties)
+        except exception.NoValidHost as ex:
+            self._set_share_error_state_and_notify('create_share',
+                                                   context, ex, request_spec)
+        except Exception as ex:
+            with excutils.save_and_reraise_exception():
+                self._set_share_error_state_and_notify('create_share',
+                                                       context, ex,
+                                                       request_spec)
+
+    def _set_share_error_state_and_notify(self, method, context, ex,
+                                          request_spec):
+        LOG.warning(_("Failed to schedule_%(method)s: %(ex)s") % locals())
+
+        share_state = {'status': 'error'}
+        properties = request_spec.get('share_properties', {})
+
+        share_id = request_spec.get('share_id', None)
+
+        if share_id:
+            db.share_update(context, share_id, share_state)
+
+        payload = dict(request_spec=request_spec,
+                       share_properties=properties,
+                       share_id=share_id,
+                       state=share_state,
+                       method=method,
+                       reason=ex)
+
+        notifier.notify(context, notifier.publisher_id("scheduler"),
+                        'scheduler.' + method, notifier.ERROR, payload)
+
     def _set_volume_state_and_notify(self, method, updates, context, ex,
                                      request_spec):
         LOG.error(_("Failed to schedule_%(method)s: %(ex)s") % locals())
@@ -138,3 +175,4 @@ class SchedulerManager(manager.Manager):
 
     def request_service_capabilities(self, context):
         volume_rpcapi.VolumeAPI().publish_service_capabilities(context)
+        share_rpcapi.ShareAPI().publish_service_capabilities(context)

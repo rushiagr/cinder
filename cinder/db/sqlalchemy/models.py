@@ -24,7 +24,7 @@ SQLAlchemy models for cinder data.
 from sqlalchemy import Column, Integer, String, Text, schema
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import ForeignKey, DateTime, Boolean
+from sqlalchemy import ForeignKey, DateTime, Boolean, Enum
 from sqlalchemy.orm import relationship, backref, object_mapper
 
 from cinder.db.sqlalchemy.session import get_session
@@ -427,6 +427,79 @@ class Backup(BASE, CinderBase):
     object_count = Column(Integer)
 
 
+class Share(BASE, CinderBase):
+    """Represents an NFS and CIFS shares."""
+    __tablename__ = 'shares'
+
+    @property
+    def name(self):
+        return FLAGS.share_name_template % self.id
+
+    id = Column(String(36), primary_key=True)
+    user_id = Column(String(255))
+    project_id = Column(String(255))
+    host = Column(String(255))
+    size = Column(Integer)
+    availability_zone = Column(String(255))
+    status = Column(String(255))
+    scheduled_at = Column(DateTime)
+    launched_at = Column(DateTime)
+    terminated_at = Column(DateTime)
+    display_name = Column(String(255))
+    display_description = Column(String(255))
+    snapshot_id = Column(String(36))
+    share_type = Column(String(255))
+    export_location = Column(String(255))
+
+
+class ShareAccessMapping(BASE, CinderBase):
+    """Represents access to NFS."""
+    STATE_NEW = 'new'
+    STATE_ACTIVE = 'active'
+    STATE_DELETING = 'deleting'
+    STATE_DELETED = 'deleted'
+    STATE_ERROR = 'error'
+
+    __tablename__ = 'share_access_map'
+    id = Column(String(36), primary_key=True)
+    share_id = Column(String(36), ForeignKey('shares.id'))
+    access_type = Column(String(255))
+    access_to = Column(String(255))
+    state = Column(Enum(STATE_NEW, STATE_ACTIVE,
+                        STATE_DELETING, STATE_DELETED, STATE_ERROR),
+                   default=STATE_NEW)
+
+
+class ShareSnapshot(BASE, CinderBase):
+    """Represents a snapshot of a share."""
+    __tablename__ = 'share_snapshots'
+
+    @property
+    def name(self):
+        return FLAGS.share_snapshot_name_template % self.id
+
+    @property
+    def share_name(self):
+        return FLAGS.share_name_template % self.share_id
+
+    id = Column(String(36), primary_key=True)
+    user_id = Column(String(255))
+    project_id = Column(String(255))
+    share_id = Column(String(36))
+    status = Column(String(255))
+    progress = Column(String(255))
+    display_name = Column(String(255))
+    display_description = Column(String(255))
+    share_size = Column(Integer)
+    share_type = Column(String(255))
+    export_location = Column(String(255))
+    share = relationship(Share, backref="snapshots",
+                         foreign_keys=share_id,
+                         primaryjoin='and_('
+                         'ShareSnapshot.share_id == Share.id,'
+                         'ShareSnapshot.deleted == False)')
+
+
 def register_models():
     """Register Models and create metadata.
 
@@ -438,6 +511,9 @@ def register_models():
     models = (Backup,
               Migration,
               Service,
+              Share,
+              ShareAccessMapping,
+              ShareSnapshot,
               SMBackendConf,
               SMFlavors,
               SMVolume,

@@ -59,6 +59,13 @@ db_opts = [
     cfg.StrOpt('volume_name_template',
                default='volume-%s',
                help='Template string to be used to generate volume names'),
+    cfg.StrOpt('share_name_template',
+               default='share-%s',
+               help='Template string to be used to generate share names'),
+    cfg.StrOpt('share_snapshot_name_template',
+               default='share-snapshot-%s',
+               help='Template string to be used to generate share snapshot '
+                    'names'),
     cfg.StrOpt('snapshot_name_template',
                default='snapshot-%s',
                help='Template string to be used to generate snapshot names'),
@@ -118,6 +125,15 @@ def service_get_all_volume_sorted(context):
 
     """
     return IMPL.service_get_all_volume_sorted(context)
+
+
+def service_get_all_share_sorted(context):
+    """Get all share services sorted by share count.
+
+    :returns: a list of (Service, share_count) tuples.
+
+    """
+    return IMPL.service_get_all_share_sorted(context)
 
 
 def service_get_by_args(context, host, binary):
@@ -748,3 +764,120 @@ def backup_update(context, backup_id, values):
 def backup_destroy(context, backup_id):
     """Destroy the backup or raise if it does not exist."""
     return IMPL.backup_destroy(context, backup_id)
+
+
+####################
+
+
+def share_create(context, values):
+    """Create new share."""
+    return IMPL.share_create(context, values)
+
+
+def share_update(context, share_id, values):
+    """Update share fields."""
+    return IMPL.share_update(context, share_id, values)
+
+
+def share_get(context, share_id):
+    """Get share by id."""
+    return IMPL.share_get(context, share_id)
+
+
+def share_get_all(context):
+    """Get all shares."""
+    return IMPL.share_get_all(context)
+
+
+def share_get_all_by_host(context, host):
+    """Returns all shares with given host."""
+    return IMPL.share_get_all_by_host(context, host)
+
+
+def share_get_all_by_project(context, project_id):
+    """Returns all shares with given project ID."""
+    return IMPL.share_get_all_by_project(context, project_id)
+
+
+def share_delete(context, share_id):
+    """Delete share."""
+    return IMPL.share_delete(context, share_id)
+
+
+###################
+
+
+def share_access_create(context, values):
+    """Allow access to share."""
+    return IMPL.share_access_create(context, values)
+
+
+def share_access_get(context, access_id):
+    """Allow access to share."""
+    return IMPL.share_access_get(context, access_id)
+
+
+def share_access_get_all_for_share(context, share_id):
+    """Allow access to share."""
+    return IMPL.share_access_get_all_for_share(context, share_id)
+
+
+def share_access_delete(context, access_id):
+    """Deny access to share."""
+    return IMPL.share_access_delete(context, access_id)
+
+
+def share_access_update(context, access_id, values):
+    """Update access record."""
+    return IMPL.share_access_update(context, access_id, values)
+
+
+####################
+
+
+def share_snapshot_create(context, values):
+    """Create a snapshot from the values dictionary."""
+    return IMPL.share_snapshot_create(context, values)
+
+
+def share_snapshot_destroy(context, snapshot_id):
+    """Destroy the snapshot or raise if it does not exist."""
+    return IMPL.share_snapshot_destroy(context, snapshot_id)
+
+
+def share_snapshot_get(context, snapshot_id):
+    """Get a snapshot or raise if it does not exist."""
+    return IMPL.share_snapshot_get(context, snapshot_id)
+
+
+def share_snapshot_get_all(context):
+    """Get all snapshots."""
+    return IMPL.share_snapshot_get_all(context)
+
+
+def share_snapshot_get_all_by_project(context, project_id):
+    """Get all snapshots belonging to a project."""
+    return IMPL.share_snapshot_get_all_by_project(context, project_id)
+
+
+def share_snapshot_get_all_for_share(context, share_id):
+    """Get all snapshots for a share."""
+    return IMPL.share_snapshot_get_all_for_share(context, share_id)
+
+
+def share_snapshot_update(context, snapshot_id, values):
+    """Set the given properties on an snapshot and update it.
+
+    Raises NotFound if snapshot does not exist.
+    """
+    return IMPL.share_snapshot_update(context, snapshot_id, values)
+
+
+def share_snapshot_data_get_for_project(context, project_id, session=None):
+    """Get count and gigabytes used for snapshots for specified project."""
+    return IMPL.share_snapshot_data_get_for_project(context,
+                                                    project_id,
+                                                    session=None)
+
+
+####################

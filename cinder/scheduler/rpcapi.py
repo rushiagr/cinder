@@ -35,6 +35,7 @@ class SchedulerAPI(cinder.openstack.common.rpc.proxy.RpcProxy):
         1.1 - Add create_volume() method
         1.2 - Add request_spec, filter_properties arguments
               to create_volume()
+        1.3 - Add create_share() method
     '''
 
     RPC_API_VERSION = '1.0'
@@ -57,6 +58,18 @@ class SchedulerAPI(cinder.openstack.common.rpc.proxy.RpcProxy):
             request_spec=request_spec_p,
             filter_properties=filter_properties),
             version='1.2')
+
+    def create_share(self, ctxt, topic, share_id, snapshot_id=None,
+                     request_spec=None, filter_properties=None):
+        request_spec_p = jsonutils.to_primitive(request_spec)
+        return self.cast(ctxt, self.make_msg(
+            'create_share',
+            topic=topic,
+            share_id=share_id,
+            snapshot_id=snapshot_id,
+            request_spec=request_spec_p,
+            filter_properties=filter_properties),
+            version='1.3')
 
     def update_service_capabilities(self, ctxt,
                                     service_name, host,

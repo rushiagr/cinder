@@ -29,6 +29,7 @@ XMLNS_ATOM = 'http://www.w3.org/2005/Atom'
 XMLNS_VOLUME_V1 = 'http://docs.openstack.org/volume/api/v1'
 XMLNS_VOLUME_V2 = ('http://docs.openstack.org/api/openstack-volume/2.0/'
                    'content')
+XMLNS_SHARE_V1 = ''
 
 
 def validate_schema(xml, schema_name):

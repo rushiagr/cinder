@@ -27,6 +27,7 @@ from cinder import db
 from cinder import flags
 from cinder.openstack.common import importutils
 from cinder.openstack.common import timeutils
+from cinder.share import rpcapi as share_rpcapi
 from cinder import utils
 from cinder.volume import rpcapi as volume_rpcapi
 
@@ -41,6 +42,16 @@ scheduler_driver_opts = [
 
 FLAGS = flags.FLAGS
 FLAGS.register_opts(scheduler_driver_opts)
+
+
+def share_update_db(context, share_id, host):
+    '''Set the host and set the scheduled_at field of a share.
+
+    :returns: A Share with the updated fields set properly.
+    '''
+    now = timeutils.utcnow()
+    values = {'host': host, 'scheduled_at': now}
+    return db.share_update(context, share_id, values)
 
 
 def volume_update_db(context, volume_id, host):
@@ -59,6 +70,7 @@ class Scheduler(object):
     def __init__(self):
         self.host_manager = importutils.import_object(
             FLAGS.scheduler_host_manager)
+        self.share_rpcapi = share_rpcapi.ShareAPI()
         self.volume_rpcapi = volume_rpcapi.VolumeAPI()
 
     def get_host_list(self):
