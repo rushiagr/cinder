@@ -89,3 +89,48 @@ class SimpleScheduler(chance.ChanceScheduler):
                 return None
         msg = _("Is the appropriate service running?")
         raise exception.NoValidHost(reason=msg)
+
+    def schedule_create_share(self, context, request_spec, filter_properties):
+        """Picks a host that is up and has the fewest shares."""
+        #TODO(rushiagr) - pick only hosts that run shares
+        elevated = context.elevated()
+
+        share_id = request_spec.get('share_id')
+        snapshot_id = request_spec.get('snapshot_id')
+        share_properties = request_spec.get('share_properties')
+        share_size = share_properties.get('size')
+        availability_zone = share_properties.get('availability_zone')
+
+        zone, host = None, None
+        if availability_zone:
+            zone, _x, host = availability_zone.partition(':')
+        if host and context.is_admin:
+            service = db.service_get_by_args(elevated, host, FLAGS.share_topic)
+            if not utils.service_is_up(service):
+                raise exception.WillNotSchedule(host=host)
+            updated_share = driver.share_update_db(context, share_id, host)
+            self.share_rpcapi.create_share(context,
+                                           updated_share,
+                                           host,
+                                           snapshot_id)
+            return None
+
+        results = db.service_get_all_share_sorted(elevated)
+        if zone:
+            results = [(service, gigs) for (service, gigs) in results
+                       if service['availability_zone'] == zone]
+        for result in results:
+            (service, share_gigabytes) = result
+            if share_gigabytes + share_size > FLAGS.max_gigabytes:
+                msg = _("Not enough allocatable share gigabytes remaining")
+                raise exception.NoValidHost(reason=msg)
+            if utils.service_is_up(service) and not service['disabled']:
+                updated_share = driver.share_update_db(context, share_id,
+                                                       service['host'])
+                self.share_rpcapi.create_share(context,
+                                               updated_share,
+                                               service['host'],
+                                               snapshot_id)
+                return None
+        msg = _("Is the appropriate service running?")
+        raise exception.NoValidHost(reason=msg)

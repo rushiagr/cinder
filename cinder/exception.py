@@ -573,5 +573,42 @@ class InvalidBackup(Invalid):
     message = _("Invalid backup: %(reason)s")
 
 
+class InvalidShare(CinderException):
+    message = _("Invalid share: %(reason)s")
+
+
+class ShareAccessNotFound(NotFound):
+    message = _("Access_id %(access_id)s not found")
+
+
+class ShareAccessExists(Duplicate):
+    message = _("Share access %(access_type)s:%(access)s exists")
+
+
+class InvalidShareAccess(CinderException):
+    message = _("Invalid access_rule: %(reason)s")
+
+
+class ShareIsBusy(CinderException):
+    message = _("Deleting $(share_name) share that used")
+
+
+class ShareBackendException(CinderException):
+    message = _("Share backend error: %(msg)s")
+
+
+class ShareSnapshotNotFound(NotFound):
+    message = _("Snapshot %(snapshot_id)s could not be found.")
+
+
+class ShareSnapshotIsBusy(CinderException):
+    message = _("Deleting snapshot %(snapshot_name)s that has "
+                "dependent shares.")
+
+
+class InvalidShareSnapshot(CinderException):
+    message = _("Invalid share snapshot: %(reason)s")
+
+
 class SwiftConnectionFailed(CinderException):
     message = _("Connection to swift failed") + ": %(reason)s"

@@ -322,6 +322,24 @@ def service_get_all_volume_sorted(context):
 
 
 @require_admin_context
+def service_get_all_share_sorted(context):
+    session = get_session()
+    with session.begin():
+        topic = FLAGS.share_topic
+        label = 'share_gigabytes'
+        subq = model_query(context, models.Share.host,
+                           func.sum(models.Share.size).label(label),
+                           session=session, read_deleted="no").\
+            group_by(models.Share.host).\
+            subquery()
+        return _service_get_all_topic_subquery(context,
+                                               session,
+                                               topic,
+                                               subq,
+                                               label)
+
+
+@require_admin_context
 def service_get_by_args(context, host, binary):
     result = model_query(context, models.Service).\
         filter_by(host=host).\
@@ -1993,3 +2011,225 @@ def backup_destroy(context, backup_id):
     with session.begin():
         model_query(context, models.Backup,
                     read_deleted="yes").filter_by(id=backup_id).delete()
+
+
+################
+
+
+def _share_get_query(context, session=None):
+    if session is None:
+        session = get_session()
+    return model_query(context, models.Share, session=session)
+
+
+@require_context
+def share_create(context, values):
+    share_ref = models.Share()
+    if not values.get('id'):
+        values['id'] = str(uuid.uuid4())
+    share_ref.update(values)
+    session = get_session()
+    with session.begin():
+        share_ref.save(session=session)
+
+    return share_ref
+
+
+@require_context
+def share_update(context, share_id, values):
+    session = get_session()
+    with session.begin():
+        share_ref = share_get(context, share_id, session=session)
+        share_ref.update(values)
+        share_ref.save(session=session)
+        return share_ref
+
+
+@require_context
+def share_get(context, share_id, session=None):
+    result = _share_get_query(context, session).filter_by(id=share_id).first()
+    if result is None:
+        raise exception.NotFound()
+    return result
+
+
+@require_admin_context
+def share_get_all(context):
+    return _share_get_query(context).all()
+
+
+@require_admin_context
+def share_get_all_by_host(context, host):
+    query = _share_get_query(context)
+    return query.filter_by(host=host).all()
+
+
+@require_context
+def share_get_all_by_project(context, project_id):
+    """Returns list of shares with given project ID."""
+    return _share_get_query(context).filter_by(project_id=project_id).all()
+
+
+@require_context
+def share_delete(context, share_id):
+    session = get_session()
+    share_ref = share_get(context, share_id, session)
+    share_ref.update({'deleted': True,
+                      'deleted_at': timeutils.utcnow(),
+                      'updated_at': literal_column('updated_at'),
+                      'status': 'deleted'})
+    share_ref.save(session)
+
+
+###################
+
+
+def _share_access_get_query(context, session, values):
+    """
+    Get access record.
+    """
+    query = model_query(context, models.ShareAccessMapping, session=session)
+    return query.filter_by(**values)
+
+
+@require_context
+def share_access_create(context, values):
+    session = get_session()
+    with session.begin():
+        access_ref = models.ShareAccessMapping()
+        if not values.get('id'):
+            values['id'] = str(uuid.uuid4())
+        access_ref.update(values)
+        access_ref.save(session=session)
+        return access_ref
+
+
+@require_context
+def share_access_get(context, access_id):
+    """
+    Get access record.
+    """
+    session = get_session()
+    access = _share_access_get_query(context, session,
+                                     {'id': access_id}).first()
+    if access:
+        return access
+    else:
+        raise exception.NotFound()
+
+
+@require_context
+def share_access_get_all_for_share(context, share_id):
+    session = get_session()
+    return _share_access_get_query(context, session,
+                                   {'share_id': share_id}).all()
+
+
+@require_context
+def share_access_delete(context, access_id):
+    session = get_session()
+    with session.begin():
+        session.query(models.ShareAccessMapping).\
+            filter_by(id=access_id).\
+            update({'deleted': True,
+                    'deleted_at': timeutils.utcnow(),
+                    'updated_at': literal_column('updated_at'),
+                    'state': models.ShareAccessMapping.STATE_DELETED})
+
+
+@require_context
+def share_access_update(context, access_id, values):
+    session = get_session()
+    with session.begin():
+        access = _share_access_get_query(context, session, {'id': access_id})
+        access = access.one()
+        access.update(values)
+        access.save(session=session)
+        return access
+
+
+###################
+
+
+@require_context
+def share_snapshot_create(context, values):
+    snapshot_ref = models.ShareSnapshot()
+    if not values.get('id'):
+        values['id'] = str(uuid.uuid4())
+    snapshot_ref.update(values)
+
+    session = get_session()
+    with session.begin():
+        snapshot_ref.save(session=session)
+
+    return share_snapshot_get(context, values['id'], session=session)
+
+
+@require_admin_context
+def share_snapshot_destroy(context, snapshot_id):
+    session = get_session()
+    with session.begin():
+        session.query(models.ShareSnapshot).\
+            filter_by(id=snapshot_id).\
+            update({'status': 'deleted',
+                    'deleted': True,
+                    'deleted_at': timeutils.utcnow(),
+                    'updated_at': literal_column('updated_at')})
+
+
+@require_context
+def share_snapshot_get(context, snapshot_id, session=None):
+    result = model_query(context, models.ShareSnapshot, session=session,
+                         project_only=True).\
+        filter_by(id=snapshot_id).\
+        first()
+
+    if not result:
+        raise exception.ShareSnapshotNotFound(snapshot_id=snapshot_id)
+
+    return result
+
+
+@require_admin_context
+def share_snapshot_get_all(context):
+    return model_query(context, models.ShareSnapshot).all()
+
+
+@require_context
+def share_snapshot_get_all_by_project(context, project_id):
+    authorize_project_context(context, project_id)
+    return model_query(context, models.ShareSnapshot).\
+        filter_by(project_id=project_id).\
+        all()
+
+
+@require_context
+def share_snapshot_get_all_for_share(context, share_id):
+    return model_query(context, models.ShareSnapshot, read_deleted='no',
+                       project_only=True).\
+        filter_by(share_id=share_id).all()
+
+
+@require_context
+def share_snapshot_data_get_for_project(context, project_id, session=None):
+    authorize_project_context(context, project_id)
+    result = model_query(context,
+                         func.count(models.ShareSnapshot.id),
+                         func.sum(models.ShareSnapshot.share_size),
+                         read_deleted="no",
+                         session=session).\
+        filter_by(project_id=project_id).\
+        first()
+
+    # NOTE(vish): convert None to 0
+    return (result[0] or 0, result[1] or 0)
+
+
+@require_context
+def share_snapshot_update(context, snapshot_id, values):
+    session = get_session()
+    with session.begin():
+        snapshot_ref = share_snapshot_get(context, snapshot_id,
+                                          session=session)
+        snapshot_ref.update(values)
+        snapshot_ref.save(session=session)

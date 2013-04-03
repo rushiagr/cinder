@@ -19,6 +19,7 @@
 Tests For Scheduler
 """
 
+from mox import IsA
 
 from cinder import context
 from cinder import db
@@ -27,6 +28,7 @@ from cinder import flags
 from cinder.openstack.common import timeutils
 from cinder.scheduler import driver
 from cinder.scheduler import manager
+from cinder.scheduler import simple
 from cinder import test
 from cinder import utils
 
@@ -109,6 +111,29 @@ class SchedulerManagerTestCase(test.TestCase):
         self.manager.create_volume(self.context, topic, volume_id,
                                    request_spec=request_spec,
                                    filter_properties={})
+
+    def test_create_share_exception_puts_share_in_error_state(self):
+        """Test that a NoValideHost exception for create_share.
+
+        Puts the share in 'error' state and eats the exception.
+        """
+        fake_share_id = 1
+        self._mox_schedule_method_helper('schedule_create_share')
+        self.mox.StubOutWithMock(db, 'share_update')
+
+        topic = 'fake_topic'
+        share_id = fake_share_id
+        request_spec = {'share_id': fake_share_id}
+
+        self.manager.driver.schedule_create_share(
+            self.context,
+            request_spec, {}).AndRaise(exception.NoValidHost(reason=""))
+        db.share_update(self.context, fake_share_id, {'status': 'error'})
+
+        self.mox.ReplayAll()
+        self.manager.create_share(self.context, topic, share_id,
+                                  request_spec=request_spec,
+                                  filter_properties={})
 
     def _mox_schedule_method_helper(self, method_name):
         # Make sure the method exists that we're going to test call
@@ -198,3 +223,172 @@ class SchedulerDriverModuleTestCase(test.TestCase):
 
         self.mox.ReplayAll()
         driver.volume_update_db(self.context, 31337, 'fake_host')
+
+    def test_share_host_update_db(self):
+        self.mox.StubOutWithMock(timeutils, 'utcnow')
+        self.mox.StubOutWithMock(db, 'share_update')
+
+        timeutils.utcnow().AndReturn('fake-now')
+        db.share_update(self.context, 31337,
+                        {'host': 'fake_host',
+                         'scheduled_at': 'fake-now'})
+
+        self.mox.ReplayAll()
+        driver.share_update_db(self.context, 31337, 'fake_host')
+
+
+class SimpleSchedulerSharesTestCase(test.TestCase):
+    """Test case for simple scheduler create share method."""
+    driver = simple.SimpleScheduler()
+
+    def setUp(self):
+        super(SimpleSchedulerSharesTestCase, self).setUp()
+        self.context = context.RequestContext('fake_user', 'fake_project')
+        self.admin_context = context.RequestContext('fake_admin_user',
+                                                    'fake_project')
+        self.admin_context.is_admin = True
+
+    def test_create_share_if_two_services_up(self):
+        share_id = 'fake'
+        fake_share = {'id': share_id, 'size': 1}
+
+        fake_service_1 = {'disabled': False, 'host': 'fake_host1'}
+
+        fake_service_2 = {'disabled': False, 'host': 'fake_host2'}
+
+        fake_result = [(fake_service_1, 2), (fake_service_2, 1)]
+
+        self.mox.StubOutWithMock(db, 'service_get_all_share_sorted')
+        self.mox.StubOutWithMock(utils, 'service_is_up')
+        self.mox.StubOutWithMock(driver, 'share_update_db')
+
+        fake_request_spec = {'share_id': share_id,
+                             'share_properties': fake_share}
+
+        db.service_get_all_share_sorted(IsA(context.RequestContext))\
+            .AndReturn(fake_result)
+        utils.service_is_up(IsA(dict)).AndReturn(True)
+        driver.share_update_db(IsA(context.RequestContext), share_id,
+                               'fake_host1').AndReturn(fake_share)
+        self.mox.ReplayAll()
+
+        self.driver.schedule_create_share(self.context, fake_request_spec, {})
+
+    def test_create_share_if_services_not_available(self):
+        share_id = 'fake'
+        fake_share = {'id': share_id, 'size': 1}
+
+        fake_result = []
+
+        fake_request_spec = {'share_id': share_id,
+                             'share_properties': fake_share}
+
+        self.mox.StubOutWithMock(db, 'service_get_all_share_sorted')
+
+        db.service_get_all_share_sorted(IsA(context.RequestContext))\
+            .AndReturn(fake_result)
+
+        self.mox.ReplayAll()
+
+        self.assertRaises(exception.NoValidHost,
+                          self.driver.schedule_create_share,
+                          self.context, fake_request_spec, {})
+
+    def test_create_share_if_max_gigabytes_exceeded(self):
+        share_id = 'fake'
+        fake_share = {'id': share_id, 'size': 10001}
+
+        fake_service_1 = {'disabled': False, 'host': 'fake_host1'}
+
+        fake_service_2 = {'disabled': False, 'host': 'fake_host2'}
+
+        fake_result = [(fake_service_1, 5), (fake_service_2, 7)]
+
+        fake_request_spec = {'share_id': share_id,
+                             'share_properties': fake_share}
+
+        self.mox.StubOutWithMock(db, 'service_get_all_share_sorted')
+
+        db.service_get_all_share_sorted(IsA(context.RequestContext))\
+            .AndReturn(fake_result)
+
+        self.mox.ReplayAll()
+
+        self.assertRaises(exception.NoValidHost,
+                          self.driver.schedule_create_share,
+                          self.context, fake_request_spec, {})
+
+    def test_create_share_availability_zone(self):
+        share_id = 'fake'
+        fake_share = {'id': share_id,
+                      'availability_zone': 'fake:fake',
+                      'size': 1}
+
+        fake_service_1 = {'disabled': False, 'host': 'fake_host1',
+                          'availability_zone': 'fake'}
+
+        fake_service_2 = {'disabled': False, 'host': 'fake_host2',
+                          'availability_zone': 'super_fake'}
+
+        fake_result = [(fake_service_1, 0), (fake_service_2, 1)]
+
+        fake_request_spec = {'share_id': share_id,
+                             'share_properties': fake_share}
+
+        self.mox.StubOutWithMock(utils, 'service_is_up')
+        self.mox.StubOutWithMock(driver, 'share_update_db')
+        self.mox.StubOutWithMock(db, 'service_get_all_share_sorted')
+
+        db.service_get_all_share_sorted(IsA(context.RequestContext))\
+            .AndReturn(fake_result)
+
+        utils.service_is_up(fake_service_1).AndReturn(True)
+        driver.share_update_db(IsA(context.RequestContext), share_id,
+                               fake_service_1['host']).AndReturn(fake_share)
+
+        self.mox.ReplayAll()
+        self.driver.schedule_create_share(self.context, fake_request_spec, {})
+
+    def test_create_share_availability_zone_on_host(self):
+        share_id = 'fake'
+        fake_share = {'id': share_id,
+                      'availability_zone': 'fake:fake',
+                      'size': 1}
+
+        fake_request_spec = {'share_id': share_id,
+                             'share_properties': fake_share}
+
+        self.mox.StubOutWithMock(utils, 'service_is_up')
+        self.mox.StubOutWithMock(db, 'service_get_by_args')
+        self.mox.StubOutWithMock(driver, 'share_update_db')
+
+        db.service_get_by_args(IsA(context.RequestContext), 'fake',
+                               'cinder-share').AndReturn('fake_service')
+        utils.service_is_up('fake_service').AndReturn(True)
+        driver.share_update_db(IsA(context.RequestContext), share_id,
+                               'fake').AndReturn(fake_share)
+
+        self.mox.ReplayAll()
+        self.driver.schedule_create_share(self.admin_context,
+                                          fake_request_spec, {})
+
+    def test_create_share_availability_zone_if_service_down(self):
+        share_id = 'fake'
+        fake_share = {'id': share_id,
+                      'availability_zone': 'fake:fake',
+                      'size': 1}
+
+        fake_request_spec = {'share_id': share_id,
+                             'share_properties': fake_share}
+
+        self.mox.StubOutWithMock(utils, 'service_is_up')
+        self.mox.StubOutWithMock(db, 'service_get_by_args')
+
+        db.service_get_by_args(IsA(context.RequestContext), 'fake',
+                               'cinder-share').AndReturn('fake_service')
+        utils.service_is_up('fake_service').AndReturn(False)
+
+        self.mox.ReplayAll()
+        self.assertRaises(exception.WillNotSchedule,
+                          self.driver.schedule_create_share,
+                          self.admin_context, fake_request_spec, {})
