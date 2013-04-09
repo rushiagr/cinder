@@ -164,7 +164,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
                                      FLAGS.share_volume_group,
                                      run_as_root=True)
         except exception.ProcessExecutionError as exc:
-            LOG.error(_("Error retrieving volume status: "), exc.stderr)
+            LOG.error(_("Error retrieving volume status: %s") % exc.stderr)
             out = False
 
         if out:
@@ -210,12 +210,12 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
                 if 'device is busy' in exc.message:
                     raise exception.ShareIsBusy(share_name=share['name'])
                 else:
-                    LOG.info('Unable to umount: ', exc)
+                    LOG.info('Unable to umount: %s', exc)
             #remove dir
             try:
                 os.rmdir(mount_path)
             except OSError:
-                LOG.info('Unable to delete ', mount_path)
+                LOG.info('Unable to delete %s', mount_path)
 
     def create_share(self, ctx, share):
         """Is called after allocate_space to create share on the volume"""
