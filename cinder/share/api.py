@@ -26,7 +26,6 @@ from cinder.db import base
 from cinder import exception
 from cinder import flags
 from cinder.image import glance
-from cinder.openstack.common import cfg
 from cinder.openstack.common import log as logging
 from cinder.openstack.common import rpc
 from cinder.openstack.common import timeutils
@@ -34,6 +33,8 @@ import cinder.policy
 from cinder import quota
 from cinder.scheduler import rpcapi as scheduler_rpcapi
 from cinder.share import rpcapi as share_rpcapi
+
+from oslo.config import cfg
 
 
 FLAGS = flags.FLAGS
