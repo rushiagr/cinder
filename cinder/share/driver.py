@@ -26,9 +26,10 @@ import time
 
 from cinder import exception
 from cinder import flags
-from cinder.openstack.common import cfg
 from cinder.openstack.common import log as logging
 from cinder import utils
+
+from oslo.config import cfg
 
 
 LOG = logging.getLogger(__name__)

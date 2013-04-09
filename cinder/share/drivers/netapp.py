@@ -24,9 +24,10 @@ from suds.sax import text
 
 from cinder import exception
 from cinder import flags
-from cinder.openstack.common import cfg
 from cinder.openstack.common import log
 from cinder.share import driver
+
+from oslo.config import cfg
 
 
 LOG = log.getLogger(__name__)
