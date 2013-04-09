@@ -312,7 +312,7 @@ class LVMShareDriverTestCase(test.TestCase):
 
         mount_path = self._get_mount_path(self.share)
         expected_exec = [
-            "umount -f %s" % (mount_path,),
+            "umount -f %s" % (mount_path),
         ]
         fake_utils.fake_execute_set_repliers([(expected_exec[0], exec_runner)])
         self.mox.StubOutWithMock(os.path, 'exists')
@@ -328,13 +328,11 @@ class LVMShareDriverTestCase(test.TestCase):
 
         mount_path = self._get_mount_path(self.share)
         expected_exec = [
-            "umount -f %s" % (mount_path,),
+            "umount -f %s" % (mount_path),
         ]
         fake_utils.fake_execute_set_repliers([(expected_exec[0], exec_runner)])
         self.mox.StubOutWithMock(os.path, 'exists')
         os.path.exists(mount_path).AndReturn(True)
-        self.mox.StubOutWithMock(os, 'rmdir')
-        os.rmdir(mount_path).AndRaise(OSError())
         self.mox.ReplayAll()
         self._driver.remove_export(self._context, self.share)
         self.assertEqual(fake_utils.fake_execute_get_log(), expected_exec)
