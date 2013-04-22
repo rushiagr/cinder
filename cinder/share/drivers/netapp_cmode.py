@@ -26,38 +26,47 @@ from cinder import exception
 from cinder import flags
 from cinder.openstack.common import log
 from cinder.share import driver
+from cinder.volume.drivers.netapp import api
 
 from oslo.config import cfg
 
+'''config options
+vserver name(openstack)
+filer IP
+filer uname
+filer password
+'''
 
 LOG = log.getLogger(__name__)
 
 NETAPP_NAS_OPTS = [
-    cfg.StrOpt('netapp_nas_wsdl_url',
-               default=None,
-               help='URL of the WSDL file for the DFM server'),
+    cfg.StrOpt('netapp_nas_transport_type',
+               default='http',
+               help='Transport type protocol'),
     cfg.StrOpt('netapp_nas_login',
                default=None,
-               help='User name for the DFM server'),
+               help='User name for the clustered ONTAP controller'),
     cfg.StrOpt('netapp_nas_password',
                default=None,
-               help='Password for the DFM server'),
+               help='Password for the clustered ONTAP controller',
+               secret=True),
     cfg.StrOpt('netapp_nas_server_hostname',
                default=None,
-               help='Hostname for the DFM server'),
-    cfg.IntOpt('netapp_nas_server_port',
-               default=8088,
-               help='Port number for the DFM server'),
-    cfg.BoolOpt('netapp_nas_server_secure',
-                default=True,
-                help='Use secure connection to server.'),
+               help='Hostname for the clustered ONTAP controller'),
+    cfg.StrOpt('netapp_nas_vserver',
+               default='openstack',
+               help='Cluster vserver to use for provisioning'),
+    cfg.FloatOpt('netapp_nas_size_multiplier',
+                 default=1.2,
+                 help='Volume size multiplier to ensure while creation'),
 ]
+
 
 FLAGS = flags.FLAGS
 FLAGS.register_opts(NETAPP_NAS_OPTS)
 
 
-class NetAppShareDriver(driver.ShareDriver):
+class NetAppClusteredShareDriver(driver.ShareDriver):
     """
     NetApp specific NAS driver. Allows for NFS and CIFS NAS storage usage.
     """
