@@ -446,7 +446,7 @@ class NetAppNFSHelper(NetAppNASHelperBase):
         client.send_request_to('nfs-exportfs-append-rules-2',
                                args_xml % export_pathname)
 
-        export_ip = client.get_host_ip_by(target_id)
+        export_ip = FLAGS.netapp_nas_server_hostname
         export_location = ':'.join([export_ip, export_pathname])
         return export_location
 
