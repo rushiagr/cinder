@@ -26,7 +26,8 @@ from suds.sax import text
 from cinder import exception
 from cinder import flags
 from cinder.openstack.common import log
-from cinder.share import driver
+#from cinder.share import driver
+
 from cinder.volume.drivers.netapp import api
 
 from oslo.config import cfg
@@ -40,6 +41,7 @@ filer password
 #TODOS(rushiagr)
     1. Make _remember_share() more generic, or remove altogether
     2. Change _client.send_request_to() to some other name
+    3. Remove references of cmode_filer
 
 '''
 
@@ -50,14 +52,14 @@ NETAPP_NAS_OPTS = [
                default='http',
                help='Transport type protocol'),
     cfg.StrOpt('netapp_nas_login',
-               default=None,
+               default='admin',
                help='User name for the clustered ONTAP controller'),
     cfg.StrOpt('netapp_nas_password',
-               default=None,
+               default='Netapp123',
                help='Password for the clustered ONTAP controller',
                secret=True),
     cfg.StrOpt('netapp_nas_server_hostname',
-               default=None,
+               default='10.63.165.71',
                help='Hostname for the clustered ONTAP controller'),
     cfg.StrOpt('netapp_nas_vserver',
                default='openstack',
@@ -78,7 +80,7 @@ class NetAppClusteredShareDriver(driver.ShareDriver):
     """
 
     def __init__(self, db, *args, **kwargs):
-        super(NetAppShareDriver, self).__init__(*args, **kwargs)
+        super(NetAppClusteredShareDriver, self).__init__(*args, **kwargs)
         self.db = db
         self._client = NetAppApiClient()
         self._helpers = None
@@ -234,7 +236,7 @@ class NetAppClusteredShareDriver(driver.ShareDriver):
     def _find_best_aggregate(self):
         """Returns aggregate with the most free space left."""
         aggrs = self._client.get_available_aggregates()
-        best_aggregate = max(aggrs, key=lambda m: ls[m])
+        best_aggregate = max(aggrs, key=lambda m: aggrs[m])
 
         return best_aggregate
 
@@ -345,7 +347,7 @@ class NetAppApiClient(object):
             aggr_size = int(aggr_elem.get_child_content('aggr-availsize'))
             aggr_dict[aggr_name] = aggr_size
         
-        
+        LOG.debug("aggr_dict:", aggr_dict)
         return aggr_dict
 
 
@@ -701,3 +703,6 @@ class NetAppCIFSHelper(NetAppNASHelperBase):
         xml_args = ('<path>/vol/%s</path>'
                     '<share-name>%s</share-name>') % (share_name, share_name)
         client.send_request_to('cifs-share-add', xml_args)
+
+if __name__ == '__main__':
+    client = NetAppApiClient()
