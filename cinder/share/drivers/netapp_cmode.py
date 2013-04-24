@@ -26,9 +26,10 @@ from suds.sax import text
 from cinder import exception
 from cinder import flags
 from cinder.openstack.common import log
-#from cinder.share import driver
+from cinder.share import driver
 
-from cinder.volume.drivers.netapp import api
+from cinder.volume.drivers.netapp.api import NaApiError, NaElement, NaServer
+
 
 from oslo.config import cfg
 
@@ -107,8 +108,8 @@ class NetAppClusteredShareDriver(driver.ShareDriver):
 
     def deallocate_container(self, context, share):
         """Free share space."""
-        self._share_offline(target, share)
-        self._delete_share(target, share)
+        self._share_offline(share)
+        self._delete_share(share)
 
     def create_share(self, context, share):
         """Creates NAS storage."""
@@ -203,17 +204,17 @@ class NetAppClusteredShareDriver(driver.ShareDriver):
         except KeyError:
             pass
 
-    def _share_offline(self, target, share):
+    def _share_offline(self, share):
         """Sends share offline. Required before deleting a share."""
         share_name = _get_valid_share_name(share['id'])
         xml_args = ('<name>%s</name>') % share_name
         self._client.send_request_to('volume-offline', xml_args)
 
-    def _delete_share(self, target, share):
+    def _delete_share(self, share):
         """Destroys share on a target OnTap device."""
         share_name = _get_valid_share_name(share['id'])
-        xml_args = ('<force>true</force>'
-                    '<name>%s</name>') % share_name
+        xml_args = ('<name>%s</name>'
+                   ) % share_name
         self._client.send_request_to('volume-destroy', xml_args)
 
     def _setup_helpers(self):
@@ -244,6 +245,7 @@ class NetAppClusteredShareDriver(driver.ShareDriver):
         """Create new share on aggregate."""
         share_name = _get_valid_share_name(share['id'])
         args_xml = ('<containing-aggr-name>%s</containing-aggr-name>'
+                    '<junction-path>/vol</junction-path>'
                     '<size>%dg</size>'
                     '<volume>%s</volume>') % (aggregate, share['size'],
                                               share_name)
@@ -304,7 +306,9 @@ class NetAppApiClient(object):
                                 style=NaServer.STYLE_LOGIN_PASSWORD,
                                 username=FLAGS.netapp_nas_login,
                                 password=FLAGS.netapp_nas_password)
-        LOG.debug(_('Using NetApp filer: %s') % FLAGS.netapp_nas_server_hostname)
+        self._client.set_api_version(1,15)
+        self._client.set_vserver('rushi')
+        #LOG.debug(_('Using NetApp filer:'), FLAGS.netapp_nas_server_hostname)
 
     def send_request_to(self, request, xml_args=None,
                         do_response_check=True):
@@ -321,7 +325,6 @@ class NetAppApiClient(object):
         # TODO(rushiagr): better way to repr xml string, with sanitation
         query_string = '<' + request + '>' + xml_args + '</' + request + '>'
         query_elem = NaElement(etree.fromstring(query_string))
-        srv = client.service
         
         response = self._client.invoke_successfully(query_elem)
 
@@ -444,7 +447,7 @@ class NetAppNFSHelper(NetAppNASHelperBase):
         client = self._client
         valid_share_name = _get_valid_share_name(share['id'])
         export_pathname = '/vol/' + valid_share_name
-
+        print 'export pathname:', export_pathname
         client.send_request_to('nfs-exportfs-append-rules-2',
                                args_xml % export_pathname)
 
@@ -706,3 +709,13 @@ class NetAppCIFSHelper(NetAppNASHelperBase):
 
 if __name__ == '__main__':
     client = NetAppApiClient()
+    drv = NetAppClusteredShareDriver('')
+    drv.do_setup('blah')
+    print 'setup done'
+    print drv._find_best_aggregate()
+    print 'found best aggr'
+    share = {'id': '12-34', 'size': 1, 'share_type': 'NfS'}
+    drv.allocate_container('blah', share)
+    print 'share allocated, table:', drv._share_table
+    
+    
