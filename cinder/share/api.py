@@ -104,6 +104,10 @@ class API(base.Base):
                    % size)
             raise exception.InvalidInput(reason=msg)
 
+        if share_type.lower() not in ['nfs', 'cifs']:
+            msg = (_("Invalid share type provided: %s") % share_type)
+            raise exception.InvalidInput(reason=msg)
+
         if availability_zone is None:
             availability_zone = FLAGS.storage_availability_zone
 
