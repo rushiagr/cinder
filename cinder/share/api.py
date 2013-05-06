@@ -104,6 +104,8 @@ class API(base.Base):
                    % size)
             raise exception.InvalidInput(reason=msg)
 
+        #TODO(rushiagr): Find a suitable place to keep all the allowed
+        #                share types so that it becomes easier to add one
         if share_type.lower() not in ['nfs', 'cifs']:
             msg = (_("Invalid share type provided: %s") % share_type)
             raise exception.InvalidInput(reason=msg)
