@@ -157,6 +157,11 @@ class API(base.Base):
             msg = _("Share status must be available or error")
             raise exception.InvalidShare(reason=msg)
 
+        snapshots = self.db.share_snapshot_get_all_for_share(context, share_id)
+        if len(snapshots):
+            msg = _("Share still has %d dependent snapshots") % len(snapshots)
+            raise exception.InvalidVolume(reason=msg)
+
         now = timeutils.utcnow()
         share = self.db.share_update(context, share_id, {'status': 'deleting',
                                                          'terminated_at': now})
