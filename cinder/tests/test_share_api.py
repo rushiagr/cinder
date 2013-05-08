@@ -43,7 +43,7 @@ def fake_share(id, **kwargs):
         'status': 'fakestatus',
         'display_name': 'fakename',
         'display_description': 'fakedesc',
-        'share_type': 'fakeproto',
+        'share_type': 'nfs',
         'export_location': 'fake_location',
         'host': 'fakehost',
         'scheduled_at': datetime.datetime(1, 1, 1, 1, 1, 1),
@@ -65,7 +65,7 @@ def fake_snapshot(id, **kwargs):
         'status': 'fakestatus',
         'display_name': 'fakename',
         'display_description': 'fakedesc',
-        'share_type': 'fakeproto',
+        'share_type': 'nfs',
         'export_location': 'fake_location',
         'progress': 'fakeprogress99%',
         'scheduled_at': datetime.datetime(1, 1, 1, 1, 1, 1),
@@ -133,7 +133,7 @@ class ShareAPITestCase(test.TestCase):
                                            request_spec=request_spec,
                                            filter_properties={})
         self.mox.ReplayAll()
-        self.api.create(self.context, 'fakeproto', '1', 'fakename', 'fakedesc',
+        self.api.create(self.context, 'nfs', '1', 'fakename', 'fakedesc',
                         availability_zone='fakeaz')
 
     def test_create_snapshot(self):
@@ -231,7 +231,7 @@ class ShareAPITestCase(test.TestCase):
                                            request_spec=request_spec,
                                            filter_properties={})
         self.mox.ReplayAll()
-        self.api.create(self.context, 'fakeproto', '1', 'fakename', 'fakedesc',
+        self.api.create(self.context, 'nfs', '1', 'fakename', 'fakedesc',
                         snapshot=snapshot, availability_zone='fakeaz')
 
     def test_get_snapshot(self):
@@ -251,20 +251,20 @@ class ShareAPITestCase(test.TestCase):
                                  status='error')
         self.mox.ReplayAll()
         self.assertRaises(exception.InvalidShareSnapshot, self.api.create,
-                          self.context, 'fakeproto', '1', 'fakename',
+                          self.context, 'nfs', '1', 'fakename',
                           'fakedesc', snapshot=snapshot,
                           availability_zone='fakeaz')
 
     def test_create_wrong_size_0(self):
         self.mox.ReplayAll()
         self.assertRaises(exception.InvalidInput, self.api.create,
-                          self.context, 'fakeproto', 0, 'fakename', 'fakedesc',
+                          self.context, 'nfs', 0, 'fakename', 'fakedesc',
                           availability_zone='fakeaz')
 
     def test_create_wrong_size_some(self):
         self.mox.ReplayAll()
         self.assertRaises(exception.InvalidInput, self.api.create,
-                          self.context, 'fakeproto', 'some', 'fakename',
+                          self.context, 'nfs', 'some', 'fakename',
                           'fakedesc', availability_zone='fakeaz')
 
     def test_delete_available(self):
