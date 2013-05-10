@@ -30,6 +30,7 @@ from cinder.openstack.common import excutils
 from cinder.openstack.common import importutils
 from cinder.openstack.common import log as logging
 from cinder.openstack.common import timeutils
+from cinder.share.configuration import Configuration
 
 from oslo.config import cfg
 
@@ -52,14 +53,19 @@ class ShareManager(manager.SchedulerDependentManager):
 
     def __init__(self, share_driver=None, service_name=None, *args, **kwargs):
         """Load the driver from args, or from flags."""
+        self.configuration = Configuration(share_manager_opts,
+                                           config_group=service_name)
         #NOTE(rushiagr): Don't support multi share backends like
         #               multi-volume-backends.
+        #TODO(rushiagr): need to check if the below line can be removed safely
         service_name = service_name or 'share'
         super(ShareManager, self).__init__(service_name=service_name,
                                            *args, **kwargs)
         if not share_driver:
-            share_driver = FLAGS.share_driver
-        self.driver = importutils.import_object(share_driver, self.db)
+            share_driver = self.configuration.share_driver
+        self.driver = importutils.import_object(share_driver,
+                                                self.db,
+                                                configuration=self.configuration)
 
     def init_host(self):
         """Initialization for a standalone service."""

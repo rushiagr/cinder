@@ -68,6 +68,7 @@ class NetAppShareDriver(driver.ShareDriver):
         self._client = NetAppApiClient()
         self._helpers = None
         self._share_table = {}
+        self.configuration.append_config_values(NETAPP_NAS_OPTS)
 
     def allocate_container(self, context, share):
         """Allocate space for the share on aggregates."""
@@ -295,15 +296,15 @@ class NetAppApiClient(object):
 
     def do_setup(self):
         """Setup suds (web services) client."""
-        protocol = 'https' if FLAGS.netapp_nas_server_secure else 'http'
+        protocol = 'https' if self.configuration.netapp_nas_server_secure else 'http'
         soap_url = ('%s://%s:%s/apis/soap/v1' %
                     (protocol,
-                     FLAGS.netapp_nas_server_hostname,
-                     FLAGS.netapp_nas_server_port))
+                     self.configuration.netapp_nas_server_hostname,
+                     self.configuration.netapp_nas_server_port))
 
-        self._client = suds.client.Client(FLAGS.netapp_nas_wsdl_url,
-                                          username=FLAGS.netapp_nas_login,
-                                          password=FLAGS.netapp_nas_password,
+        self._client = suds.client.Client(self.configuration.netapp_nas_wsdl_url,
+                                          username=self.configuration.netapp_nas_login,
+                                          password=self.configuration.netapp_nas_password,
                                           location=soap_url)
 
         LOG.info('NetApp RPC client started')
@@ -376,7 +377,7 @@ class NetAppApiClient(object):
     def check_configuration():
         """Ensure that the flags we care about are set."""
         for flag in NetAppApiClient.REQUIRED_FLAGS:
-            if not getattr(FLAGS, flag, None):
+            if not getattr(self.configuration, flag, None):
                 raise exception.Error(_('%s is not set') % flag)
 
 

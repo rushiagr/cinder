@@ -17,7 +17,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Starter script for Cinder Volume."""
+"""Starter script for Cinder Share."""
 
 import eventlet
 eventlet.monkey_patch()
@@ -39,11 +39,21 @@ from cinder.openstack.common import log as logging
 from cinder import service
 from cinder import utils
 
+FLAGS = flags.FLAGS
+
 if __name__ == '__main__':
     flags.parse_args(sys.argv)
     logging.setup("cinder")
     utils.monkey_patch()
     launcher = service.ProcessLauncher()
-    server = service.Service.create(binary='cinder-share')
-    launcher.launch_server(server)
+    if FLAGS.enabled_share_backends:
+        for backend in FLAGS.enabled_share_backends:
+            host = "%s@%s" % (FLAGS.host, backend)
+            server = service.Service.create(
+                                        host=host,
+                                        service_name=backend)
+            launcher.launch_server(server)
+    else:
+        server = service.Service.create(binary='cinder-share')
+        launcher.launch_server(server)
     launcher.wait()

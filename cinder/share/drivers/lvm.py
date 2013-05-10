@@ -78,11 +78,11 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         out, err = self._execute('vgs', '--noheadings', '-o', 'name',
                                  run_as_root=True)
         volume_groups = out.split()
-        if not FLAGS.share_volume_group in volume_groups:
+        if not self.configuration.share_volume_group in volume_groups:
             msg = (_("share volume group %s doesn't exist")
-                   % FLAGS.share_volume_group)
+                   % self.configuration.share_volume_group)
             raise exception.InvalidParameterValue(err=msg)
-        if not FLAGS.share_export_ip:
+        if not self.configuration.share_export_ip:
             msg = (_("share_export_ip doesn't specified"))
             raise exception.InvalidParameterValue(err=msg)
 
@@ -96,22 +96,22 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
     def _setup_helpers(self):
         """Initializes protocol-specific NAS drivers."""
         self._helpers = {}
-        for helper_str in FLAGS.share_lvm_helpers:
+        for helper_str in self.configuration.share_lvm_helpers:
             share_type, _, import_str = helper_str.partition('=')
             helper = importutils.import_class(import_str)
             self._helpers[share_type.upper()] = helper(self._execute)
 
     def _local_path(self, share):
         # NOTE(vish): stops deprecation warning
-        escaped_group = FLAGS.share_volume_group.replace('-', '--')
+        escaped_group = self.configuration.share_volume_group.replace('-', '--')
         escaped_name = share['name'].replace('-', '--')
         return "/dev/mapper/%s-%s" % (escaped_group, escaped_name)
 
     def _allocate_container(self, share_name, sizestr):
         cmd = ['lvcreate', '-L', sizestr, '-n', share_name,
-               FLAGS.share_volume_group]
-        if FLAGS.share_lvm_mirrors:
-            cmd += ['-m', FLAGS.share_lvm_mirrors, '--nosync']
+               self.configuration.share_volume_group]
+        if self.configuration.share_lvm_mirrors:
+            cmd += ['-m', self.configuration.share_lvm_mirrors, '--nosync']
             terras = int(sizestr[:-1]) / 1024.0
             if terras >= 1.5:
                 rsize = int(2 ** math.ceil(math.log(terras) / math.log(2)))
@@ -126,7 +126,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         # zero out old volumes to prevent data leaking between users
         # TODO(ja): reclaiming space should be done lazy and low priority
         self._try_execute('lvremove', '-f', "%s/%s" %
-                          (FLAGS.share_volume_group,
+                          (self.configuration.share_volume_group,
                            share_name),
                           run_as_root=True)
 
@@ -155,13 +155,13 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
 
         data['total_capacity_gb'] = 0
         data['free_capacity_gb'] = 0
-        data['reserved_percentage'] = FLAGS.reserved_percentage
+        data['reserved_percentage'] = self.configuration.reserved_percentage
         data['QoS_support'] = False
 
         try:
             out, err = self._execute('vgs', '--noheadings', '--nosuffix',
                                      '--unit=G', '-o', 'name,size,free',
-                                     FLAGS.share_volume_group,
+                                     self.configuration.share_volume_group,
                                      run_as_root=True)
         except exception.ProcessExecutionError as exc:
             LOG.error(_("Error retrieving volume status: %s") % exc.stderr)
@@ -226,7 +226,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
 
     def create_snapshot(self, context, snapshot):
         """Creates a snapshot."""
-        orig_lv_name = "%s/%s" % (FLAGS.share_volume_group,
+        orig_lv_name = "%s/%s" % (self.configuration.share_volume_group,
                                   snapshot['share_name'])
         self._try_execute('lvcreate', '-L', '%sG' % snapshot['share_size'],
                           '--name', snapshot['name'],
@@ -293,7 +293,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
 
     def _get_mount_path(self, share):
         """Returns path where share is mounted"""
-        return os.path.join(FLAGS.share_export_root, share['name'])
+        return os.path.join(self.configuration.share_export_root, share['name'])
 
     def _copy_volume(self, srcstr, deststr, size_in_g):
         # Use O_DIRECT to avoid thrashing the system buffer cache
@@ -352,7 +352,7 @@ class NFSHelper(NASHelperBase):
 
     def create_export(self, local_path, share_name, recreate=False):
         """Create new export, delete old one if exists"""
-        return ':'.join([FLAGS.share_export_ip, local_path])
+        return ':'.join([self.configuration.share_export_ip, local_path])
 
     def remove_export(self, local_path, share_name):
         """Remove export"""
@@ -388,7 +388,7 @@ class CIFSHelper(NASHelperBase):
     def __init__(self, execute):
         """Store executor and configuration path"""
         super(CIFSHelper, self).__init__(execute)
-        self.config = FLAGS.smb_config_path
+        self.config = self.configuration.smb_config_path
         self.test_config = "%s_" % (self.config,)
 
     def init(self):
@@ -421,7 +421,7 @@ class CIFSHelper(NASHelperBase):
             os.makedirs(local_path)
         self._execute('chown', 'nobody', '-R', local_path, run_as_root=True)
         self._update_config(parser)
-        return '//%s/%s' % (FLAGS.share_export_ip, share_name)
+        return '//%s/%s' % (self.configuration.share_export_ip, share_name)
 
     def remove_export(self, local_path, share_name):
         """Remove export"""
@@ -552,7 +552,7 @@ class CIFSNetConfHelper(NASHelperBase):
         for name, value in parameters.items():
             self._execute('net', 'conf', 'setparm', share_name, name, value,
                           run_as_root=True)
-        return '//%s/%s' % (FLAGS.share_export_ip, share_name)
+        return '//%s/%s' % (self.configuration.share_export_ip, share_name)
 
     def remove_export(self, local_path, share_name):
         """Remove share definition from samba server."""

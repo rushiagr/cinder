@@ -38,9 +38,9 @@ class ShareAPI(cinder.openstack.common.rpc.proxy.RpcProxy):
 
     BASE_RPC_API_VERSION = '1.1'
 
-    def __init__(self):
+    def __init__(self, topic=None):
         super(ShareAPI, self).__init__(
-            topic=FLAGS.share_topic,
+            topic=topic or FLAGS.share_topic,
             default_version=self.BASE_RPC_API_VERSION)
 
     def create_share(self, ctxt, share, host,

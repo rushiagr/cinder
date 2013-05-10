@@ -28,32 +28,40 @@ from cinder import exception
 from cinder import flags
 from cinder.openstack.common import log as logging
 from cinder import utils
+from cinder.share.configuration import Configuration
 
 from oslo.config import cfg
 
 
 LOG = logging.getLogger(__name__)
 
-driver_opts = [
+share_opts = [
     #NOTE(rushiagr): Reasonable to define this option at only one place.
     cfg.IntOpt('num_shell_tries',
                default=3,
                help='number of times to attempt to run flakey shell commands'),
     cfg.IntOpt('reserved_percentage',
                default=0,
-               help='The percentage of backend capacity is reserved'),
+               help='The percentage of backend capacity reserved'),
+   cfg.StrOpt('share_backend_name',
+               default=None,
+               help='The backend name for a given driver implementation'),
 ]
 
 FLAGS = flags.FLAGS
-FLAGS.register_opts(driver_opts)
+FLAGS.register_opts(share_opts)
 
-
+#TODO(rushiagr): keep the configuration option in only one class and not two
 #NOTE(rushiagr): The right place for this class is cinder.driver or
 #               cinder.utils.
 class ExecuteMixin(object):
     """Provides an executable functionality to a driver class."""
 
     def __init__(self, *args, **kwargs):
+        self.db = None
+        self.configuration = kwargs.get('configuration', None)
+        if self.configuration:
+            self.configuration.append_config_values(share_opts)
         self.set_execute(kwargs.pop('execute', utils.execute))
         super(ExecuteMixin, self).__init__(*args, **kwargs)
 
@@ -71,7 +79,7 @@ class ExecuteMixin(object):
                 return True
             except exception.ProcessExecutionError:
                 tries = tries + 1
-                if tries >= FLAGS.num_shell_tries:
+                if tries >= self.configuration.num_shell_tries:
                     raise
                 LOG.exception(_("Recovering from a failed execute.  "
                                 "Try number %s"), tries)
@@ -80,6 +88,13 @@ class ExecuteMixin(object):
 
 class ShareDriver(object):
     """Class defines interface of NAS driver."""
+
+    def __init__(self, *args, **kwargs):
+        super(ShareDriver, self).__init__(*args, **kwargs)
+        self.configuration = kwargs.get('configuration', None)
+        if self.configuration:
+            self.configuration.append_config_values(share_opts)
+
 
     def allocate_container(self, context, share):
         """Is called to allocate container for share."""
@@ -133,14 +148,32 @@ class ShareDriver(object):
         """Check for setup error."""
         pass
 
-    def get_share_stats(self, refresh=False):
-        """Return the current state of the share service.
-
-           :param refresh: If is True run the update first.
-           :returns: State of share service.
-        """
-        return None
-
     def do_setup(self, context):
         """Any initialization the share driver does while starting."""
         pass
+
+    def get_share_stats(self, refresh=False):
+        """Get share status.
+
+        If 'refresh' is True, run update the stats first."""
+        if refresh:
+            self._update_share_status()
+
+        return self._stats
+
+    def _update_share_status(self):
+        """Retrieve status info from share group."""
+
+        LOG.debug(_("Updating share status"))
+        data = {}
+        backend_name = self.configuration.safe_get('share_backend_name')
+        data["share_backend_name"] = backend_name or 'Generic_NFS'
+        data["vendor_name"] = 'Open Source'
+        data["driver_version"] = '1.0'
+        data["storage_protocol"] = None
+
+        data['total_capacity_gb'] = 'infinite'
+        data['free_capacity_gb'] = 'infinite'
+        data['reserved_percentage'] = 100
+        data['QoS_support'] = False
+        self._stats = data
