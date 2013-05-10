@@ -52,7 +52,7 @@ class ShareManager(manager.SchedulerDependentManager):
 
     def __init__(self, share_driver=None, service_name=None, *args, **kwargs):
         """Load the driver from args, or from flags."""
-        #NOTE(ikharin): Don't support multi share backends like
+        #NOTE(rushiagr): Don't support multi share backends like
         #               multi-volume-backends.
         service_name = service_name or 'share'
         super(ShareManager, self).__init__(service_name=service_name,

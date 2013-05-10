@@ -125,7 +125,7 @@ class ShareController(wsgi.Controller):
         search_opts = {}
         search_opts.update(req.GET)
 
-        # NOTE(ikharin): v2 API allows name instead of display_name
+        # NOTE(rushiagr): v2 API allows name instead of display_name
         if 'name' in search_opts:
             search_opts['display_name'] = search_opts['name']
             del search_opts['name']
@@ -157,12 +157,12 @@ class ShareController(wsgi.Controller):
 
         share = body['share']
 
-        # NOTE(ikharin): v2 API allows name instead of display_name
+        # NOTE(rushiagr): v2 API allows name instead of display_name
         if share.get('name'):
             share['display_name'] = share.get('name')
             del share['name']
 
-        # NOTE(ikharin): v2 API allows description instead of
+        # NOTE(rushiagr): v2 API allows description instead of
         #                display_description
         if share.get('description'):
             share['display_description'] = share.get('description')

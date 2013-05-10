@@ -110,7 +110,7 @@ class ShareSnapshotsController(wsgi.Controller):
         search_opts = {}
         search_opts.update(req.GET)
 
-        # NOTE(ikharin): v2 API allows name instead of display_name
+        # NOTE(rushiagr): v2 API allows name instead of display_name
         if 'name' in search_opts:
             search_opts['display_name'] = search_opts['name']
             del search_opts['name']
@@ -147,12 +147,12 @@ class ShareSnapshotsController(wsgi.Controller):
         msg = _("Create snapshot from share %s")
         LOG.audit(msg, share_id, context=context)
 
-        # NOTE(ikharin): v2 API allows name instead of display_name
+        # NOTE(rushiagr): v2 API allows name instead of display_name
         if 'name' in snapshot:
             snapshot['display_name'] = snapshot.get('name')
             del snapshot['name']
 
-        # NOTE(ikharin): v2 API allows description instead of
+        # NOTE(rushiagr): v2 API allows description instead of
         #                display_description
         if 'description' in snapshot:
             snapshot['display_description'] = snapshot.get('description')

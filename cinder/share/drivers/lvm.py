@@ -196,7 +196,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         to the share object to be persisted."""
         device_name = self._local_path(share)
         location = self._mount_device(share, device_name)
-        #TODO(agordeev): what is the provider_location? realy needed?
+        #TODO(rushiagr): what is the provider_location? realy needed?
         return {'provider_location': location}
 
     def remove_export(self, ctx, share):
@@ -416,7 +416,7 @@ class CIFSHelper(NASHelperBase):
         parser.set(share_name, 'create mask', '0755')
         parser.set(share_name, 'hosts deny', '0.0.0.0/0')  # denying all ips
         parser.set(share_name, 'hosts allow', '127.0.0.1')
-        #NOTICE(agordeev): ensure that local_path dir is existing
+        #NOTE(rushiagr): ensure that local_path dir is existing
         if not os.path.exists(local_path):
             os.makedirs(local_path)
         self._execute('chown', 'nobody', '-R', local_path, run_as_root=True)
