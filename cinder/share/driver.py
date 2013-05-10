@@ -90,7 +90,7 @@ class ShareDriver(object):
     """Class defines interface of NAS driver."""
 
     def __init__(self, *args, **kwargs):
-        super(ShareDriver, self).__init__(*args, **kwargs)
+        super(ShareDriver, self).__init__()
         self.configuration = kwargs.get('configuration', None)
         if self.configuration:
             self.configuration.append_config_values(share_opts)

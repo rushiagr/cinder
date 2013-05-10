@@ -209,8 +209,10 @@ class NetAppShareDriver(driver.ShareDriver):
 
     def _setup_helpers(self):
         """Initializes protocol-specific NAS drivers."""
-        self._helpers = {'CIFS': NetAppCIFSHelper(self._client),
-                         'NFS': NetAppNFSHelper(self._client)}
+        #TODO(rushiagr): better way to handle configuration instead of just
+        #                   passing to the helper
+        self._helpers = {'CIFS': NetAppCIFSHelper(self._client, configuration),
+                         'NFS': NetAppNFSHelper(self._client, configuration)}
 
     def _get_helper(self, share):
         """Returns driver which implements share protocol."""
@@ -383,7 +385,8 @@ class NetAppApiClient(object):
 
 class NetAppNASHelperBase(object):
     """Interface for protocol-specific NAS drivers."""
-    def __init__(self, suds_client):
+    def __init__(self, suds_client, config_object):
+        self.configuration = config_object
         self._client = suds_client
 
     def create_share(self, target_id, share):
@@ -410,7 +413,8 @@ class NetAppNASHelperBase(object):
 class NetAppNFSHelper(NetAppNASHelperBase):
     """Netapp specific NFS sharing driver"""
 
-    def __init__(self, suds_client):
+    def __init__(self, suds_client, config_object):
+        self.configuration = config_object
         super(NetAppNFSHelper, self).__init__(suds_client)
 
     def create_share(self, target_id, share):
@@ -575,7 +579,8 @@ class NetAppCIFSHelper(NetAppNASHelperBase):
 
     CIFS_USER_GROUP = 'Administrators'
 
-    def __init__(self, suds_client):
+    def __init__(self, suds_client, config_object):
+        self.configuration = config_object
         super(NetAppCIFSHelper, self).__init__(suds_client)
 
     def create_share(self, target_id, share):

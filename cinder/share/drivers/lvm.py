@@ -99,7 +99,9 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         for helper_str in self.configuration.share_lvm_helpers:
             share_type, _, import_str = helper_str.partition('=')
             helper = importutils.import_class(import_str)
-            self._helpers[share_type.upper()] = helper(self._execute)
+            #TODO(rushiagr): better way to handle configuration instead of just
+            #                   passing to the helper
+            self._helpers[share_type.upper()] = helper(self._execute, self.configuration)
 
     def _local_path(self, share):
         # NOTE(vish): stops deprecation warning
@@ -315,7 +317,8 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
 class NASHelperBase(object):
     """Interface to work with share"""
 
-    def __init__(self, execute):
+    def __init__(self, execute, config_object):
+        self.configuration = config_object
         self._execute = execute
 
     def init(self):
@@ -342,8 +345,8 @@ class NASHelperBase(object):
 class NFSHelper(NASHelperBase):
     """Interface to work with share"""
 
-    def __init__(self, execute):
-        super(NFSHelper, self).__init__(execute)
+    def __init__(self, execute, config_object):
+        super(NFSHelper, self).__init__(execute, config_object)
         try:
             self._execute('exportfs', check_exit_code=True,
                           run_as_root=True)
@@ -385,9 +388,9 @@ class NFSHelper(NASHelperBase):
 class CIFSHelper(NASHelperBase):
     """Class provides functionality to operate with cifs shares"""
 
-    def __init__(self, execute):
+    def __init__(self, execute, config_object):
         """Store executor and configuration path"""
-        super(CIFSHelper, self).__init__(execute)
+        super(CIFSHelper, self).__init__(execute, config_object)
         self.config = self.configuration.smb_config_path
         self.test_config = "%s_" % (self.config,)
 
