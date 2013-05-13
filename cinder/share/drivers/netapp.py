@@ -65,10 +65,10 @@ class NetAppShareDriver(driver.ShareDriver):
     def __init__(self, db, *args, **kwargs):
         super(NetAppShareDriver, self).__init__(*args, **kwargs)
         self.db = db
-        self._client = NetAppApiClient()
         self._helpers = None
         self._share_table = {}
         self.configuration.append_config_values(NETAPP_NAS_OPTS)
+        self._client = NetAppApiClient(self.configuration)
 
     def allocate_container(self, context, share):
         """Allocate space for the share on aggregates."""
@@ -174,7 +174,7 @@ class NetAppShareDriver(driver.ShareDriver):
 
     def check_for_setup_error(self):
         """Raises error if prerequisites are not met."""
-        self._client.check_configuration()
+        self._client.check_configuration(self.configuration)
 
     def _get_filer(self, share_id):
         """Returns filer name for the share_id."""
@@ -211,8 +211,8 @@ class NetAppShareDriver(driver.ShareDriver):
         """Initializes protocol-specific NAS drivers."""
         #TODO(rushiagr): better way to handle configuration instead of just
         #                   passing to the helper
-        self._helpers = {'CIFS': NetAppCIFSHelper(self._client, configuration),
-                         'NFS': NetAppNFSHelper(self._client, configuration)}
+        self._helpers = {'CIFS': NetAppCIFSHelper(self._client, self.configuration),
+                         'NFS': NetAppNFSHelper(self._client, self.configuration)}
 
     def _get_helper(self, share):
         """Returns driver which implements share protocol."""
@@ -293,7 +293,8 @@ class NetAppApiClient(object):
                       'netapp_nas_server_hostname',
                       'netapp_nas_server_port']
 
-    def __init__(self):
+    def __init__(self, configuration):
+        self.configuration = configuration
         self._client = None
 
     def do_setup(self):
@@ -376,10 +377,10 @@ class NetAppApiClient(object):
         return ip
 
     @staticmethod
-    def check_configuration():
+    def check_configuration(config_object):
         """Ensure that the flags we care about are set."""
         for flag in NetAppApiClient.REQUIRED_FLAGS:
-            if not getattr(self.configuration, flag, None):
+            if not getattr(config_object, flag, None):
                 raise exception.Error(_('%s is not set') % flag)
 
 
@@ -415,7 +416,7 @@ class NetAppNFSHelper(NetAppNASHelperBase):
 
     def __init__(self, suds_client, config_object):
         self.configuration = config_object
-        super(NetAppNFSHelper, self).__init__(suds_client)
+        super(NetAppNFSHelper, self).__init__(suds_client, config_object)
 
     def create_share(self, target_id, share):
         """Creates NFS share"""
@@ -581,7 +582,7 @@ class NetAppCIFSHelper(NetAppNASHelperBase):
 
     def __init__(self, suds_client, config_object):
         self.configuration = config_object
-        super(NetAppCIFSHelper, self).__init__(suds_client)
+        super(NetAppCIFSHelper, self).__init__(suds_client, config_object)
 
     def create_share(self, target_id, share):
         """Creates CIFS storage."""
