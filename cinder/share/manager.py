@@ -57,7 +57,6 @@ class ShareManager(manager.SchedulerDependentManager):
                                            config_group=service_name)
         #NOTE(rushiagr): Don't support multi share backends like
         #               multi-volume-backends.
-        #TODO(rushiagr): need to check if the below line can be removed safely
         service_name = service_name or 'share'
         super(ShareManager, self).__init__(service_name=service_name,
                                            *args, **kwargs)

@@ -214,3 +214,143 @@ class FilterScheduler(driver.Scheduler):
         LOG.debug(_("Choosing %(best_host)s") % locals())
         best_host.obj.consume_from_volume(volume_properties)
         return best_host
+
+    #NOTE(rushiagr): Methods for scheduling shares
+
+    def schedule_create_share(self, context, request_spec, filter_properties):
+        weighed_host = self._schedule_share(context, request_spec,
+                                      filter_properties)
+
+        if not weighed_host:
+            raise exception.NoValidHost(reason="")
+
+        host = weighed_host.obj.host
+        share_id = request_spec['share_id']
+        snapshot_id = request_spec['snapshot_id']
+
+        updated_share = driver.share_update_db(context, share_id, host)
+        self._post_select_populate_filter_properties(filter_properties,
+                                                     weighed_host.obj)
+
+        # context is not serializable
+        filter_properties.pop('context', None)
+
+        self.share_rpcapi.create_share(context, updated_share, host,
+                                         request_spec=request_spec,
+                                         filter_properties=filter_properties,
+                                         allow_reschedule=True,
+                                         snapshot_id=snapshot_id,
+                                         image_id=image_id)
+
+    def _schedule_share(self, context, request_spec, filter_properties=None):
+        """Returns a list of hosts that meet the required specs,
+        ordered by their fitness.
+        """
+        elevated = context.elevated()
+
+        share_properties = request_spec['share_properties']
+        # Since Cinder is using mixed filters from Oslo and it's own, which
+        # takes 'resource_XX' and 'volume_XX' as input respectively, copying
+        # 'volume_XX' to 'resource_XX' will make both filters happy.
+        resource_properties = share_properties.copy()
+        share_type = request_spec.get("share_type", None)
+        resource_type = request_spec.get("share_type", None)
+        request_spec.update({'resource_properties': resource_properties})
+
+        config_options = self._get_configuration_options()
+
+        if filter_properties is None:
+            filter_properties = {}
+        self._populate_retry_share(filter_properties, resource_properties)
+
+        filter_properties.update({'context': context,
+                                  'request_spec': request_spec,
+                                  'config_options': config_options,
+                                  'share_type': share_type,
+                                  'resource_type': resource_type})
+
+        self.populate_filter_properties_share(request_spec,
+                                        filter_properties)
+
+        # Find our local list of acceptable hosts by filtering and
+        # weighing our options. we virtually consume resources on
+        # it so subsequent selections can adjust accordingly.
+
+        # Note: remember, we are using an iterator here. So only
+        # traverse this list once.
+        hosts = self.host_manager.get_all_host_states_share(elevated)
+
+        # Filter local hosts based on requirements ...
+        hosts = self.host_manager.get_filtered_hosts(hosts,
+                                                     filter_properties)
+        if not hosts:
+            return None
+
+        LOG.debug(_("Filtered share %(hosts)s") % locals())
+        # weighted_host = WeightedHost() ... the best
+        # host for the job.
+        weighed_hosts = self.host_manager.get_weighed_hosts(hosts,
+                                                            filter_properties)
+        best_host = weighed_hosts[0]
+        LOG.debug(_("Choosing for share: %(best_host)s") % locals())
+        #NOTE(rushiagr): we're assuming for now that the hosts which run shares
+        #               are the ones which runs volumes, and hence, we're
+        #               updating the available space parameters at same place
+        best_host.obj.consume_from_volume(share_properties)
+        return best_host
+
+    def _populate_retry_share(self, filter_properties, properties):
+        """Populate filter properties with history of retries for this
+        request. If maximum retries is exceeded, raise NoValidHost.
+        """
+        max_attempts = self.max_attempts
+        retry = filter_properties.pop('retry', {})
+
+        if max_attempts == 1:
+            # re-scheduling is disabled.
+            return
+
+        # retry is enabled, update attempt count:
+        if retry:
+            retry['num_attempts'] += 1
+        else:
+            retry = {
+                'num_attempts': 1,
+                'hosts': []  # list of share service hosts tried
+            }
+        filter_properties['retry'] = retry
+
+        share_id = properties.get('share_id')
+        self._log_share_error(share_id, retry)
+
+        if retry['num_attempts'] > max_attempts:
+            msg = _("Exceeded max scheduling attempts %(max_attempts)d for "
+                    "share %(share_id)s") % locals()
+            raise exception.NoValidHost(reason=msg)
+
+    def _log_share_error(self, share_id, retry):
+        """If the request contained an exception from a previous share
+        create operation, log it to aid debugging
+        """
+        exc = retry.pop('exc', None)  # string-ified exception from share
+        if not exc:
+            return  # no exception info from a previous attempt, skip
+
+        hosts = retry.get('hosts', None)
+        if not hosts:
+            return  # no previously attempted hosts, skip
+
+        last_host = hosts[-1]
+        msg = _("Error scheduling %(share_id)s from last share-service: "
+                "%(last_host)s : %(exc)s") % locals()
+        LOG.error(msg)
+
+    def populate_filter_properties_share(self, request_spec, filter_properties):
+        """Stuff things into filter_properties.  Can be overridden in a
+        subclass to add more data.
+        """
+        shr = request_spec['share_properties']
+        filter_properties['size'] = shr['size']
+        filter_properties['availability_zone'] = shr.get('availability_zone')
+        filter_properties['user_id'] = shr.get('user_id')
+        filter_properties['metadata'] = shr.get('metadata')

@@ -92,6 +92,7 @@ class HostState(object):
         self.update_capabilities(capabilities, service)
 
         self.volume_backend_name = None
+        self.share_backend_name = None
         self.vendor_name = None
         self.driver_version = 0
         self.storage_protocol = None
@@ -121,6 +122,24 @@ class HostState(object):
                 return
 
             self.volume_backend = capability.get('volume_backend_name', None)
+            self.vendor_name = capability.get('vendor_name', None)
+            self.driver_version = capability.get('driver_version', None)
+            self.storage_protocol = capability.get('storage_protocol', None)
+            self.QoS_support = capability.get('QoS_support', False)
+
+            self.total_capacity_gb = capability['total_capacity_gb']
+            self.free_capacity_gb = capability['free_capacity_gb']
+            self.reserved_percentage = capability['reserved_percentage']
+
+            self.updated = capability['timestamp']
+
+    def update_from_share_capability(self, capability):
+        """Update information about a host from its volume_node info."""
+        if capability:
+            if self.updated and self.updated > capability['timestamp']:
+                return
+
+            self.share_backend = capability.get('share_backend_name', None)
             self.vendor_name = capability.get('vendor_name', None)
             self.driver_version = capability.get('driver_version', None)
             self.storage_protocol = capability.get('storage_protocol', None)
@@ -280,5 +299,39 @@ class HostManager(object):
                 self.host_state_map[host] = host_state
             # update host_state
             host_state.update_from_volume_capability(capabilities)
+
+        return self.host_state_map.itervalues()
+
+    def get_all_host_states_share(self, context):
+        """Returns a dict of all the hosts the HostManager
+          knows about. Also, each of the consumable resources in HostState
+          are pre-populated and adjusted based on data in the db.
+
+          For example:
+          {'192.168.1.100': HostState(), ...}
+        """
+
+        # Get resource usage across the available share nodes:
+        topic = FLAGS.share_topic
+        share_services = db.service_get_all_by_topic(context, topic)
+        for service in share_services:
+            if not utils.service_is_up(service) or service['disabled']:
+                LOG.warn(_("service is down or disabled."))
+                continue
+            host = service['host']
+            capabilities = self.service_states.get(host, None)
+            host_state = self.host_state_map.get(host)
+            if host_state:
+                # copy capabilities to host_state.capabilities
+                host_state.update_capabilities(capabilities,
+                                               dict(service.iteritems()))
+            else:
+                host_state = self.host_state_cls(host,
+                                                 capabilities=capabilities,
+                                                 service=
+                                                 dict(service.iteritems()))
+                self.host_state_map[host] = host_state
+            # update host_state
+            host_state.update_from_share_capability(capabilities)
 
         return self.host_state_map.itervalues()

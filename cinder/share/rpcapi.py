@@ -34,6 +34,7 @@ class ShareAPI(cinder.openstack.common.rpc.proxy.RpcProxy):
 
         1.0 - Initial version.
         1.1 - Add snapshot support.
+        1.2 - Add filter scheduler support
     '''
 
     BASE_RPC_API_VERSION = '1.1'
@@ -44,10 +45,15 @@ class ShareAPI(cinder.openstack.common.rpc.proxy.RpcProxy):
             default_version=self.BASE_RPC_API_VERSION)
 
     def create_share(self, ctxt, share, host,
+                     request_spec, filter_properties,
+                     allow_reschedule=True,
                      snapshot_id=None):
         self.cast(ctxt,
                   self.make_msg('create_share',
                                 share_id=share['id'],
+                                request_spec=request_spec,
+                                filter_properties=filter_properties,
+                                allow_reschedule=allow_reschedule,
                                 snapshot_id=snapshot_id),
                   topic=rpc.queue_get_for(ctxt,
                                           self.topic,
