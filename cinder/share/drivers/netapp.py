@@ -260,6 +260,37 @@ class NetAppShareDriver(driver.ShareDriver):
                 raise exception.ShareSnapshotIsBusy(
                     snapshot_name=snapshot_name)
 
+    def get_share_stats(self, refresh=False):
+        """Get share status.
+
+        If 'refresh' is True, run update the stats first."""
+        if refresh:
+            self._update_share_status()
+
+        return self._stats
+
+    def _update_share_status(self):
+        """Retrieve status info from share volume group."""
+
+        LOG.debug(_("Updating share status"))
+        data = {}
+
+        # Note(zhiteng): These information are driver/backend specific,
+        # each driver may define these values in its own config options
+        # or fetch from driver specific configuration file.
+        data["share_backend_name"] = 'NetApp_7_mode'
+        data["vendor_name"] = 'NetApp'
+        data["driver_version"] = '1.0'
+        #TODO(rushiagr): Pick storage_protocol from the helper used.
+        data["storage_protocol"] = 'NFS_CIFS'
+
+        data['total_capacity_gb'] = 'infinite'
+        data['free_capacity_gb'] = 'infinite'
+        data['reserved_percentage'] = 0
+        data['QoS_support'] = False
+
+        self._stats = data
+
 
 def _check_response(request, response):
     """Checks RPC responses from NetApp devices."""

@@ -50,7 +50,7 @@ share_opts = [
                help='If set, create lvms with multiple mirrors. Note that '
                     'this requires lvm_mirrors + 2 pvs with available space'),
     cfg.StrOpt('share_volume_group',
-               default='cinder-shares',
+               default='stack-shares',
                help='Name for the VG that will contain exported shares'),
     cfg.ListOpt('share_lvm_helpers',
                 default=[
@@ -72,6 +72,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         super(LVMShareDriver, self).__init__(*args, **kwargs)
         self.db = db
         self._helpers = None
+        self.configuration.append_config_values(share_opts)
 
     def check_for_setup_error(self):
         """Returns an error if prerequisites aren't met"""
@@ -150,10 +151,11 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         # Note(zhiteng): These information are driver/backend specific,
         # each driver may define these values in its own config options
         # or fetch from driver specific configuration file.
-        data["share_backend_name"] = 'LVM_iSCSI'
+        data["share_backend_name"] = 'LVM'
         data["vendor_name"] = 'Open Source'
         data["driver_version"] = '1.0'
-        data["storage_protocol"] = 'iSCSI'
+        #TODO(rushiagr): Pick storage_protocol from the helper used.
+        data["storage_protocol"] = 'NFS_CIFS'
 
         data['total_capacity_gb'] = 0
         data['free_capacity_gb'] = 0
