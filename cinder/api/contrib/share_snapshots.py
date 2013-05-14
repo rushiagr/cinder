@@ -38,7 +38,7 @@ def make_snapshot(elem):
     elem.set('status')
     elem.set('name')
     elem.set('description')
-    elem.set('share_type')
+    elem.set('share_proto')
     elem.set('export_location')
 
 

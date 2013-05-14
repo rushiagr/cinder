@@ -98,11 +98,11 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         """Initializes protocol-specific NAS drivers."""
         self._helpers = {}
         for helper_str in self.configuration.share_lvm_helpers:
-            share_type, _, import_str = helper_str.partition('=')
+            share_proto, _, import_str = helper_str.partition('=')
             helper = importutils.import_class(import_str)
             #TODO(rushiagr): better way to handle configuration instead of just
             #                   passing to the helper
-            self._helpers[share_type.upper()] = helper(self._execute, self.configuration)
+            self._helpers[share_proto.upper()] = helper(self._execute, self.configuration)
 
     def _local_path(self, share):
         # NOTE(vish): stops deprecation warning
@@ -272,9 +272,9 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
                                             access['access_to'])
 
     def _get_helper(self, share):
-        if share['share_type'].startswith('NFS'):
+        if share['share_proto'].startswith('NFS'):
             return self._helpers['NFS']
-        elif share['share_type'].startswith('CIFS'):
+        elif share['share_proto'].startswith('CIFS'):
             return self._helpers['CIFS']
         else:
             raise exception.InvalidShare(reason='Wrong share type')

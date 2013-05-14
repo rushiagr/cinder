@@ -75,7 +75,7 @@ class API(base.Base):
         self.share_rpcapi = share_rpcapi.ShareAPI()
         super(API, self).__init__(db_driver)
 
-    def create(self, context, share_type, size, name, description,
+    def create(self, context, share_proto, size, name, description,
                snapshot=None, availability_zone=None):
         """Create new share."""
 
@@ -106,8 +106,8 @@ class API(base.Base):
 
         #TODO(rushiagr): Find a suitable place to keep all the allowed
         #                share types so that it becomes easier to add one
-        if share_type.lower() not in ['nfs', 'cifs']:
-            msg = (_("Invalid share type provided: %s") % share_type)
+        if share_proto.lower() not in ['nfs', 'cifs']:
+            msg = (_("Invalid share type provided: %s") % share_proto)
             raise exception.InvalidInput(reason=msg)
 
         if availability_zone is None:
@@ -122,13 +122,13 @@ class API(base.Base):
                    'scheduled_at': timeutils.utcnow(),
                    'display_name': name,
                    'display_description': description,
-                   'share_type': share_type,
+                   'share_proto': share_proto,
                    }
 
         share = self.db.share_create(context, options)
 
         request_spec = {'share_properties': options,
-                        'share_type': share_type,
+                        'share_proto': share_proto,
                         'share_id': share['id'],
                         'snapshot_id': share['snapshot_id'],
                         }
@@ -184,7 +184,7 @@ class API(base.Base):
                    'share_size': share['size'],
                    'display_name': name,
                    'display_description': description,
-                   'share_type': share['share_type'],
+                   'share_proto': share['share_proto'],
                    'export_location': share['export_location']}
 
         snapshot = self.db.share_snapshot_create(context, options)

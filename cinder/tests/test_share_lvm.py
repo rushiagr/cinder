@@ -38,7 +38,7 @@ def fake_share(**kwargs):
         'id': 'fakeid',
         'name': 'fakename',
         'size': 1,
-        'share_type': 'NFS',
+        'share_proto': 'NFS',
         'export_location': '127.0.0.1:/mnt/nfs/volume-00002',
     }
     share.update(kwargs)
@@ -52,7 +52,7 @@ def fake_snapshot(**kwargs):
         'share_id': 'fakeid',
         'name': 'fakesnapshotname',
         'share_size': 1,
-        'share_type': 'NFS',
+        'share_proto': 'NFS',
         'export_location': '127.0.0.1:/mnt/nfs/volume-00002',
     }
     snapshot.update(kwargs)
@@ -450,16 +450,16 @@ class LVMShareDriverTestCase(test.TestCase):
                           self._driver._mount_device, self.share, 'fakedevice')
 
     def test_get_helper(self):
-        share_cifs = fake_share(share_type='CIFS')
-        share_nfs = fake_share(share_type='NFS')
-        share_fake = fake_share(share_type='FAKE')
+        share_cifs = fake_share(share_proto='CIFS')
+        share_nfs = fake_share(share_proto='NFS')
+        share_fake = fake_share(share_proto='FAKE')
         self.mox.ReplayAll()
         self.assertEqual(self._driver._get_helper(share_cifs),
                          self._helper_cifs)
         self.assertEqual(self._driver._get_helper(share_nfs),
                          self._helper_nfs)
         self.assertRaises(exception.InvalidShare, self._driver._get_helper,
-                          fake_share(share_type='FAKE'))
+                          fake_share(share_proto='FAKE'))
 
     def _get_mount_path(self, share):
         return os.path.join(FLAGS.share_export_root, share['name'])

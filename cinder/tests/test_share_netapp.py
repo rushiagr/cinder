@@ -214,12 +214,12 @@ class NetAppShareDriverTestCase(test.TestCase):
     def test_share_create(self):
         drv = self._driver
         ctx = self._context
-        share_type = 'CIFS'
+        share_proto = 'CIFS'
         share = {'id': '1234-abcd-5678',
-                 'share_type': share_type,
+                 'share_proto': share_proto,
                  'size': 1}
 
-        drv._helpers[share_type].create_share(IgnoreArg(), share)
+        drv._helpers[share_proto].create_share(IgnoreArg(), share)
 
         self.mox.ReplayAll()
 
@@ -228,12 +228,12 @@ class NetAppShareDriverTestCase(test.TestCase):
     def test_share_delete(self):
         drv = self._driver
         ctx = self._context
-        share_type = 'NFS'
-        helper = drv._helpers[share_type]
+        share_proto = 'NFS'
+        helper = drv._helpers[share_proto]
         ip = '172.10.0.1'
         export = '/export_path'
         share = {'id': 'abcd-1234',
-                 'share_type': share_type,
+                 'share_proto': share_proto,
                  'export_location': ':'.join([ip, export])}
         fake_access_rules = [1, 2, 3]
 
@@ -305,12 +305,12 @@ class NetAppShareDriverTestCase(test.TestCase):
 
     def test_allow_access(self):
         drv = self._driver
-        share_type = 'CIFS'
+        share_proto = 'CIFS'
         ctx = self._context
-        share = {'share_type': share_type}
+        share = {'share_proto': share_proto}
         access = {}
 
-        drv._helpers[share_type].allow_access(ctx, share, access)
+        drv._helpers[share_proto].allow_access(ctx, share, access)
 
         self.mox.ReplayAll()
 
@@ -318,12 +318,12 @@ class NetAppShareDriverTestCase(test.TestCase):
 
     def test_deny_access(self):
         drv = self._driver
-        share_type = 'CIFS'
+        share_proto = 'CIFS'
         ctx = self._context
-        share = {'share_type': share_type}
+        share = {'share_proto': share_proto}
         access = {}
 
-        drv._helpers[share_type].deny_access(ctx, share, access)
+        drv._helpers[share_proto].deny_access(ctx, share, access)
 
         self.mox.ReplayAll()
 

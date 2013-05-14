@@ -107,7 +107,7 @@ class ShareSnapshotApiTest(test.TestCase):
                 'status': 'fakesnapstatus',
                 'name': 'displaysnapname',
                 'description': 'displaysnapdesc',
-                'share_type': 'fakesnapproto',
+                'share_proto': 'fakesnapproto',
                 'export_location': 'fakesnaplocation',
                 'links': [
                     {
@@ -171,7 +171,7 @@ class ShareSnapshotApiTest(test.TestCase):
                     'status': 'fakesnapstatus',
                     'name': 'displaysnapname',
                     'description': 'displaysnapdesc',
-                    'share_type': 'fakesnapproto',
+                    'share_proto': 'fakesnapproto',
                     'export_location': 'fakesnaplocation',
                     'links': [
                         {

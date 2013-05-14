@@ -46,7 +46,7 @@ class ShareApiTest(test.TestCase):
             "size": 100,
             "name": "Share Test Name",
             "description": "Share Test Desc",
-            "share_type": "fakeproto",
+            "share_proto": "fakeproto",
             "availability_zone": "zone1:host1"
         }
         body = {"share": shr}
@@ -76,7 +76,7 @@ class ShareApiTest(test.TestCase):
             "size": 100,
             "name": "Share Test Name",
             "description": "Share Test Desc",
-            "share_type": "fakeproto",
+            "share_proto": "fakeproto",
             "availability_zone": "zone1:host1",
             "snapshot_id": 333,
         }
@@ -105,7 +105,7 @@ class ShareApiTest(test.TestCase):
         shr = {"size": '',
                "name": "Share Test Name",
                "description": "Share Test Desc",
-               "share_type": "fakeproto",
+               "share_proto": "fakeproto",
                "availability_zone": "zone1:host1"}
         body = {"share": shr}
         req = fakes.HTTPRequest.blank('/shares')
@@ -133,7 +133,7 @@ class ShareApiTest(test.TestCase):
                       'export_location': 'fake_location',
                       'id': '1',
                       'created_at': datetime.datetime(1, 1, 1, 1, 1, 1),
-                      'share_type': 'fakeproto',
+                      'share_proto': 'fakeproto',
                       'size': 1,
                       'snapshot_id': '2',
                       'status': 'fakestatus',
@@ -206,7 +206,7 @@ class ShareApiTest(test.TestCase):
                     'export_location': 'fake_location',
                     'availability_zone': 'fakeaz',
                     'name': 'displayname',
-                    'share_type': 'fakeproto',
+                    'share_proto': 'fakeproto',
                     'id': '1',
                     'snapshot_id': '2',
                     'created_at': datetime.datetime(1, 1, 1, 1, 1, 1),

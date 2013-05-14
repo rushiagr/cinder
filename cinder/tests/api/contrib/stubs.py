@@ -26,7 +26,7 @@ FAKE_UUIDS = {}
 def stub_share(id, **kwargs):
     share = {
         'id': id,
-        'share_type': 'fakeproto',
+        'share_proto': 'fakeproto',
         'export_location': 'fake_location',
         'user_id': 'fakeuser',
         'project_id': 'fakeproject',
@@ -48,7 +48,7 @@ def stub_snapshot(id, **kwargs):
     snapshot = {
         'id': id,
         'share_id': 'fakeshareid',
-        'share_type': 'fakesnapproto',
+        'share_proto': 'fakesnapproto',
         'export_location': 'fakesnaplocation',
         'user_id': 'fakesnapuser',
         'project_id': 'fakesnapproject',
@@ -72,11 +72,11 @@ def stub_share_get_notfound(self, context, share_id):
     raise exc.NotFound
 
 
-def stub_share_create(self, context, share_type, size, name, description,
+def stub_share_create(self, context, share_proto, size, name, description,
                       **param):
     share = stub_share('1')
     share['status'] = 'creating'
-    share['share_type'] = share_type
+    share['share_proto'] = share_proto
     share['size'] = size
     share['display_name'] = name
     share['display_description'] = description

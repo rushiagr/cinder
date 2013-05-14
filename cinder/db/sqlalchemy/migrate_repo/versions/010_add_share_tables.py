@@ -48,7 +48,7 @@ def upgrade(migrate_engine):
                    Column('display_description',
                           String(length=255)),
                    Column('snapshot_id', String(length=36)),
-                   Column('share_type', String(255)),
+                   Column('share_proto', String(255)),
                    Column('export_location', String(255)),
                    mysql_engine='InnoDB')
 

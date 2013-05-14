@@ -38,7 +38,7 @@ def make_share(elem):
     elem.set('status')
     elem.set('name')
     elem.set('description')
-    elem.set('share_type')
+    elem.set('share_proto')
     elem.set('export_location')
 
 
@@ -169,10 +169,10 @@ class ShareController(wsgi.Controller):
             del share['description']
 
         size = share['size']
-        share_type = share['share_type'].upper()
+        share_proto = share['share_proto'].upper()
 
-        msg = (_("Create %(share_type)s share of %(size)s GB") %
-               {'share_type': share_type, 'size': size})
+        msg = (_("Create %(share_proto)s share of %(size)s GB") %
+               {'share_proto': share_proto, 'size': size})
         LOG.audit(msg, context=context)
 
         kwargs = {}
@@ -188,7 +188,7 @@ class ShareController(wsgi.Controller):
         display_name = share.get('display_name')
         display_description = share.get('display_description')
         new_share = self.share_api.create(context,
-                                          share_type,
+                                          share_proto,
                                           size,
                                           display_name,
                                           display_description,

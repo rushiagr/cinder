@@ -46,7 +46,7 @@ def upgrade(migrate_engine):
         Column('display_name', String(length=255)),
         Column('display_description', String(length=255)),
         Column('share_size', Integer),
-        Column('share_type', String(length=255)),
+        Column('share_proto', String(length=255)),
         Column('export_location', String(255)),
     )
 

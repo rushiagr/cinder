@@ -108,7 +108,7 @@ class ShareTestCase(test.TestCase):
     def _create_share(status="creating", size=0, snapshot_id=None):
         """Create a share object."""
         share = {}
-        share['share_type'] = "NFS"
+        share['share_proto'] = "NFS"
         share['size'] = size
         share['snapshot_id'] = snapshot_id
         share['user_id'] = 'fake'
@@ -122,7 +122,7 @@ class ShareTestCase(test.TestCase):
     def _create_snapshot(status="creating", size=0, share_id=None):
         """Create a snapshot object."""
         snapshot = {}
-        snapshot['share_type'] = "NFS"
+        snapshot['share_proto'] = "NFS"
         snapshot['size'] = size
         snapshot['share_id'] = share_id
         snapshot['user_id'] = 'fake'

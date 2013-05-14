@@ -448,7 +448,7 @@ class Share(BASE, CinderBase):
     display_name = Column(String(255))
     display_description = Column(String(255))
     snapshot_id = Column(String(36))
-    share_type = Column(String(255))
+    share_proto = Column(String(255))
     export_location = Column(String(255))
 
 
@@ -491,7 +491,7 @@ class ShareSnapshot(BASE, CinderBase):
     display_name = Column(String(255))
     display_description = Column(String(255))
     share_size = Column(Integer)
-    share_type = Column(String(255))
+    share_proto = Column(String(255))
     export_location = Column(String(255))
     share = relationship(Share, backref="snapshots",
                          foreign_keys=share_id,

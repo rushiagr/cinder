@@ -216,7 +216,7 @@ class NetAppShareDriver(driver.ShareDriver):
 
     def _get_helper(self, share):
         """Returns driver which implements share protocol."""
-        share_proto = share['share_type']
+        share_proto = share['share_proto']
 
         for proto in self._helpers.keys():
             if share_proto.upper().startswith(proto):

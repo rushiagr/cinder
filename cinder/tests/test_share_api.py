@@ -43,7 +43,7 @@ def fake_share(id, **kwargs):
         'status': 'fakestatus',
         'display_name': 'fakename',
         'display_description': 'fakedesc',
-        'share_type': 'nfs',
+        'share_proto': 'nfs',
         'export_location': 'fake_location',
         'host': 'fakehost',
         'scheduled_at': datetime.datetime(1, 1, 1, 1, 1, 1),
@@ -65,7 +65,7 @@ def fake_snapshot(id, **kwargs):
         'status': 'fakestatus',
         'display_name': 'fakename',
         'display_description': 'fakedesc',
-        'share_type': 'nfs',
+        'share_proto': 'nfs',
         'export_location': 'fake_location',
         'progress': 'fakeprogress99%',
         'scheduled_at': datetime.datetime(1, 1, 1, 1, 1, 1),
@@ -121,7 +121,7 @@ class ShareAPITestCase(test.TestCase):
                      'terminated_at'):
             options.pop(name, None)
         request_spec = {'share_properties': options,
-                        'share_type': share['share_type'],
+                        'share_proto': share['share_proto'],
                         'share_id': share['id'],
                         'snapshot_id': share['snapshot_id'],
                         }
@@ -154,7 +154,7 @@ class ShareAPITestCase(test.TestCase):
                    'share_size': share['size'],
                    'display_name': fake_name,
                    'display_description': fake_desc,
-                   'share_type': share['share_type'],
+                   'share_proto': share['share_proto'],
                    'export_location': share['export_location']}
 
         self.mox.StubOutWithMock(share_api, 'check_policy')
@@ -219,7 +219,7 @@ class ShareAPITestCase(test.TestCase):
                      'terminated_at'):
             options.pop(name, None)
         request_spec = {'share_properties': options,
-                        'share_type': share['share_type'],
+                        'share_proto': share['share_proto'],
                         'share_id': share['id'],
                         'snapshot_id': share['snapshot_id'],
                         }
