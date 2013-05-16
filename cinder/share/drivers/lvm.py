@@ -50,7 +50,7 @@ share_opts = [
                help='If set, create lvms with multiple mirrors. Note that '
                     'this requires lvm_mirrors + 2 pvs with available space'),
     cfg.StrOpt('share_volume_group',
-               default='stack-shares',
+               default='cinder-shares',
                help='Name for the VG that will contain exported shares'),
     cfg.ListOpt('share_lvm_helpers',
                 default=[
