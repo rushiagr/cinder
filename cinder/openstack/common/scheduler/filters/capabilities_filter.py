@@ -27,7 +27,7 @@ class CapabilitiesFilter(filters.BaseHostFilter):
     def _satisfies_extra_specs(self, capabilities, resource_type):
         """Check that the capabilities provided by the services
         satisfy the extra specs associated with the instance type."""
-        LOG.warning("resource_type is : "+ resource_type)
+        LOG.info(resource_type)
         extra_specs = resource_type.get('extra_specs', [])
         if not extra_specs:
             return True
