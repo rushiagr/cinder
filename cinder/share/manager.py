@@ -55,14 +55,14 @@ class ShareManager(manager.SchedulerDependentManager):
         """Load the driver from args, or from flags."""
         self.configuration = Configuration(share_manager_opts,
                                            config_group=service_name)
-        service_name = service_name or 'share' #TODO(rushiagr): remove this line
         super(ShareManager, self).__init__(service_name='share',
                                            *args, **kwargs)
         if not share_driver:
             share_driver = self.configuration.share_driver
-        self.driver = importutils.import_object(share_driver,
-                                                self.db,
-                                                configuration=self.configuration)
+        self.driver = importutils.import_object(
+                        share_driver,
+                        self.db,
+                        configuration=self.configuration)
 
     def init_host(self):
         """Initialization for a standalone service."""
@@ -91,7 +91,8 @@ class ShareManager(manager.SchedulerDependentManager):
         self.publish_service_capabilities(ctxt)
 
     def create_share(self, context, share_id, request_spec=None,
-                     filter_properties=None, allow_reschedule=True, snapshot_id=None):
+                     filter_properties=None, allow_reschedule=True,
+                     snapshot_id=None):
         """Creates a share."""
         context = context.elevated()
         if filter_properties is None:

@@ -2241,4 +2241,3 @@ def share_snapshot_update(context, snapshot_id, values):
                                           session=session)
         snapshot_ref.update(values)
         snapshot_ref.save(session=session)
-

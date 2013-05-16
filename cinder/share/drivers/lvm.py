@@ -100,13 +100,15 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         for helper_str in self.configuration.share_lvm_helpers:
             share_proto, _, import_str = helper_str.partition('=')
             helper = importutils.import_class(import_str)
-            #TODO(rushiagr): better way to handle configuration instead of just
-            #                   passing to the helper
-            self._helpers[share_proto.upper()] = helper(self._execute, self.configuration)
+            #TODO(rushiagr): better way to handle configuration
+            #                   instead of just passing to the helper
+            self._helpers[share_proto.upper()] = helper(self._execute,
+                                                        self.configuration)
 
     def _local_path(self, share):
         # NOTE(vish): stops deprecation warning
-        escaped_group = self.configuration.share_volume_group.replace('-', '--')
+        escaped_group = \
+            self.configuration.share_volume_group.replace('-', '--')
         escaped_name = share['name'].replace('-', '--')
         return "/dev/mapper/%s-%s" % (escaped_group, escaped_name)
 
@@ -297,7 +299,8 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
 
     def _get_mount_path(self, share):
         """Returns path where share is mounted"""
-        return os.path.join(self.configuration.share_export_root, share['name'])
+        return os.path.join(self.configuration.share_export_root,
+                            share['name'])
 
     def _copy_volume(self, srcstr, deststr, size_in_g):
         # Use O_DIRECT to avoid thrashing the system buffer cache

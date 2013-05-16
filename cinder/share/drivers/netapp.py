@@ -211,8 +211,12 @@ class NetAppShareDriver(driver.ShareDriver):
         """Initializes protocol-specific NAS drivers."""
         #TODO(rushiagr): better way to handle configuration instead of just
         #                   passing to the helper
-        self._helpers = {'CIFS': NetAppCIFSHelper(self._client, self.configuration),
-                         'NFS': NetAppNFSHelper(self._client, self.configuration)}
+        self._helpers = {
+            'CIFS': NetAppCIFSHelper(self._client,
+                                     self.configuration),
+            'NFS': NetAppNFSHelper(self._client,
+                                   self.configuration),
+        }
 
     def _get_helper(self, share):
         """Returns driver which implements share protocol."""
@@ -330,16 +334,18 @@ class NetAppApiClient(object):
 
     def do_setup(self):
         """Setup suds (web services) client."""
-        protocol = 'https' if self.configuration.netapp_nas_server_secure else 'http'
+        protocol = 'https' if self.configuration.netapp_nas_server_secure \
+            else 'http'
         soap_url = ('%s://%s:%s/apis/soap/v1' %
                     (protocol,
                      self.configuration.netapp_nas_server_hostname,
                      self.configuration.netapp_nas_server_port))
 
-        self._client = suds.client.Client(self.configuration.netapp_nas_wsdl_url,
-                                          username=self.configuration.netapp_nas_login,
-                                          password=self.configuration.netapp_nas_password,
-                                          location=soap_url)
+        self._client = \
+            suds.client.Client(self.configuration.netapp_nas_wsdl_url,
+                               username=self.configuration.netapp_nas_login,
+                               password=self.configuration.netapp_nas_password,
+                               location=soap_url)
 
         LOG.info('NetApp RPC client started')
 

@@ -218,8 +218,9 @@ class FilterScheduler(driver.Scheduler):
     #NOTE(rushiagr): Methods for scheduling shares
 
     def schedule_create_share(self, context, request_spec, filter_properties):
-        weighed_host = self._schedule_share(context, request_spec,
-                                      filter_properties)
+        weighed_host = self._schedule_share(context,
+                                            request_spec,
+                                            filter_properties)
 
         if not weighed_host:
             raise exception.NoValidHost(reason="")
@@ -236,10 +237,10 @@ class FilterScheduler(driver.Scheduler):
         filter_properties.pop('context', None)
 
         self.share_rpcapi.create_share(context, updated_share, host,
-                                         request_spec=request_spec,
-                                         filter_properties=filter_properties,
-                                         allow_reschedule=True,
-                                         snapshot_id=snapshot_id)
+                                       request_spec=request_spec,
+                                       filter_properties=filter_properties,
+                                       allow_reschedule=True,
+                                       snapshot_id=snapshot_id)
 
     def _schedule_share(self, context, request_spec, filter_properties=None):
         """Returns a list of hosts that meet the required specs,
@@ -269,8 +270,7 @@ class FilterScheduler(driver.Scheduler):
                                   'resource_type': resource_type
                                   })
 
-        self.populate_filter_properties_share(request_spec,
-                                        filter_properties)
+        self.populate_filter_properties_share(request_spec, filter_properties)
 
         # Find our local list of acceptable hosts by filtering and
         # weighing our options. we virtually consume resources on
@@ -345,7 +345,8 @@ class FilterScheduler(driver.Scheduler):
                 "%(last_host)s : %(exc)s") % locals()
         LOG.error(msg)
 
-    def populate_filter_properties_share(self, request_spec, filter_properties):
+    def populate_filter_properties_share(self, request_spec,
+                                         filter_properties):
         """Stuff things into filter_properties.  Can be overridden in a
         subclass to add more data.
         """

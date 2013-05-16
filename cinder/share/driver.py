@@ -27,8 +27,8 @@ import time
 from cinder import exception
 from cinder import flags
 from cinder.openstack.common import log as logging
-from cinder import utils
 from cinder.share.configuration import Configuration
+from cinder import utils
 
 from oslo.config import cfg
 
@@ -43,13 +43,14 @@ share_opts = [
     cfg.IntOpt('reserved_percentage',
                default=0,
                help='The percentage of backend capacity reserved'),
-   cfg.StrOpt('share_backend_name',
+    cfg.StrOpt('share_backend_name',
                default=None,
                help='The backend name for a given driver implementation'),
 ]
 
 FLAGS = flags.FLAGS
 FLAGS.register_opts(share_opts)
+
 
 #TODO(rushiagr): keep the configuration option in only one class and not two
 #NOTE(rushiagr): The right place for this class is cinder.driver or
@@ -94,7 +95,6 @@ class ShareDriver(object):
         self.configuration = kwargs.get('configuration', None)
         if self.configuration:
             self.configuration.append_config_values(share_opts)
-
 
     def allocate_container(self, context, share):
         """Is called to allocate container for share."""
