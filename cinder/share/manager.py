@@ -55,8 +55,6 @@ class ShareManager(manager.SchedulerDependentManager):
         """Load the driver from args, or from flags."""
         self.configuration = Configuration(share_manager_opts,
                                            config_group=service_name)
-        #NOTE(rushiagr): Don't support multi share backends like
-        #               multi-volume-backends.
         service_name = service_name or 'share'
         super(ShareManager, self).__init__(service_name=service_name,
                                            *args, **kwargs)
@@ -92,8 +90,13 @@ class ShareManager(manager.SchedulerDependentManager):
 
         self.publish_service_capabilities(ctxt)
 
-    def create_share(self, context, share_id, snapshot_id=None):
+    def create_share(self, context, share_id, request_spec=None,
+                     filter_properties=None, allow_reschedule=True, snapshot_id=None):
         """Creates a share."""
+        context = context.elevated()
+        if filter_properties is None:
+            filter_properties = {}
+
         share_ref = self.db.share_get(context, share_id)
         if snapshot_id is not None:
             snapshot_ref = self.db.share_snapshot_get(context, snapshot_id)

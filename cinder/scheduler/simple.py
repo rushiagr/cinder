@@ -109,10 +109,12 @@ class SimpleScheduler(chance.ChanceScheduler):
             if not utils.service_is_up(service):
                 raise exception.WillNotSchedule(host=host)
             updated_share = driver.share_update_db(context, share_id, host)
+            #FIXME(rushiagr): align parameters here to the def create_share in
+            #                   rpcapi.py
             self.share_rpcapi.create_share(context,
                                            updated_share,
                                            host,
-                                           snapshot_id)
+                                           snapshot_id,None)
             return None
 
         results = db.service_get_all_share_sorted(elevated)
@@ -127,10 +129,12 @@ class SimpleScheduler(chance.ChanceScheduler):
             if utils.service_is_up(service) and not service['disabled']:
                 updated_share = driver.share_update_db(context, share_id,
                                                        service['host'])
+                #FIXME(rushiagr): align parameters here to the def create_share in
+                #                   rpcapi.py
                 self.share_rpcapi.create_share(context,
                                                updated_share,
                                                service['host'],
-                                               snapshot_id)
+                                               snapshot_id, None)
                 return None
         msg = _("Is the appropriate service running?")
         raise exception.NoValidHost(reason=msg)

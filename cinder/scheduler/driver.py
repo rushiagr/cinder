@@ -103,3 +103,7 @@ class Scheduler(object):
     def schedule_create_volume(self, context, request_spec, filter_properties):
         """Must override schedule method for scheduler to work."""
         raise NotImplementedError(_("Must implement schedule_create_volume"))
+
+    def schedule_create_share(self, context, request_spec, filter_properties):
+        """Must override schedule method for scheduler to work."""
+        raise NotImplementedError(_("Must implement schedule_create_share"))

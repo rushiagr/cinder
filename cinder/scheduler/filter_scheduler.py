@@ -239,8 +239,7 @@ class FilterScheduler(driver.Scheduler):
                                          request_spec=request_spec,
                                          filter_properties=filter_properties,
                                          allow_reschedule=True,
-                                         snapshot_id=snapshot_id,
-                                         image_id=image_id)
+                                         snapshot_id=snapshot_id)
 
     def _schedule_share(self, context, request_spec, filter_properties=None):
         """Returns a list of hosts that meet the required specs,
