@@ -55,8 +55,8 @@ class ShareManager(manager.SchedulerDependentManager):
         """Load the driver from args, or from flags."""
         self.configuration = Configuration(share_manager_opts,
                                            config_group=service_name)
-        service_name = service_name or 'share'
-        super(ShareManager, self).__init__(service_name=service_name,
+        service_name = service_name or 'share' #TODO(rushiagr): remove this line
+        super(ShareManager, self).__init__(service_name='share',
                                            *args, **kwargs)
         if not share_driver:
             share_driver = self.configuration.share_driver
