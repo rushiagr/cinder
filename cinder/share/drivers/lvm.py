@@ -213,7 +213,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
             try:
                 self._execute('umount', '-f', mount_path, run_as_root=True)
             except exception.ProcessExecutionError, exc:
-                if 'device is busy' in exc.message:
+                if 'device is busy' in str(exc):
                     raise exception.ShareIsBusy(share_name=share['name'])
                 else:
                     LOG.info('Unable to umount: %s', exc)
