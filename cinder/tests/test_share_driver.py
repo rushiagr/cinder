@@ -18,6 +18,7 @@
 import time
 
 from cinder import exception
+from cinder.share.configuration import Configuration
 from cinder.share import driver
 from cinder import test
 from cinder import utils
@@ -43,6 +44,6 @@ class ShareDriverTestCase(test.TestCase):
         super(ShareDriverTestCase, self).tearDown()
 
     def test__try_execute(self):
-        execute_mixin = driver.ExecuteMixin()
+        execute_mixin = driver.ExecuteMixin(configuration=Configuration(None))
         self.assertRaises(exception.ProcessExecutionError,
                           execute_mixin._try_execute)

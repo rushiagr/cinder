@@ -22,6 +22,7 @@ import suds
 
 from cinder import context
 from cinder import exception
+from cinder.share.configuration import Configuration
 from cinder.share.drivers import netapp
 from cinder import test
 
@@ -132,7 +133,9 @@ class NetAppShareDriverTestCase(test.TestCase):
         super(NetAppShareDriverTestCase, self).setUp()
         self._context = context.get_admin_context()
         self._db = self.mox.CreateMockAnything()
-        self._driver = netapp.NetAppShareDriver(self._db)
+        self._driver = netapp.NetAppShareDriver(
+            self._db,
+            configuration=Configuration(None))
         self._driver._client = self.mox.CreateMock(netapp.NetAppApiClient)
         cifs_helper = self.mox.CreateMock(netapp.NetAppCIFSHelper)
         nfs_helper = self.mox.CreateMock(netapp.NetAppNFSHelper)
@@ -349,7 +352,8 @@ class NetAppNfsHelperTestCase(test.TestCase):
         super(NetAppNfsHelperTestCase, self).setUp()
 
         fake_client = self.mox.CreateMock(netapp.NetAppApiClient)
-        self._driver = netapp.NetAppNFSHelper(fake_client)
+        fake_conf = self.mox.CreateMock(Configuration)
+        self._driver = netapp.NetAppNFSHelper(fake_client, fake_conf)
 
     def test_create_share(self):
         drv = self._driver
@@ -435,7 +439,8 @@ class NetAppCifsHelperTestCase(test.TestCase):
         super(NetAppCifsHelperTestCase, self).setUp()
 
         fake_client = self.mox.CreateMock(netapp.NetAppApiClient)
-        self._driver = netapp.NetAppCIFSHelper(fake_client)
+        fake_conf = self.mox.CreateMock(Configuration)
+        self._driver = netapp.NetAppCIFSHelper(fake_client, fake_conf)
 
     def tearDown(self):
         super(NetAppCifsHelperTestCase, self).tearDown()
@@ -546,7 +551,8 @@ class NetAppNASHelperTestCase(test.TestCase):
         super(NetAppNASHelperTestCase, self).setUp()
 
         fake_client = self.mox.CreateMock(suds.client.Client)
-        self._driver = netapp.NetAppNASHelperBase(fake_client)
+        fake_conf = self.mox.CreateMock(Configuration)
+        self._driver = netapp.NetAppNASHelperBase(fake_client, fake_conf)
 
     def tearDown(self):
         super(NetAppNASHelperTestCase, self).tearDown()
@@ -591,8 +597,9 @@ class NetAppApiClientTestCase(test.TestCase):
 
     def setUp(self):
         super(NetAppApiClientTestCase, self).setUp()
+        self.fake_conf = self.mox.CreateMock(Configuration)
         self._context = context.get_admin_context()
-        self._driver = netapp.NetAppApiClient()
+        self._driver = netapp.NetAppApiClient(self.fake_conf)
 
         self._driver._client = self.mox.CreateMock(suds.client.Client)
         self._driver._client.factory = self.mox.CreateMock(suds.client.Factory)
@@ -674,9 +681,10 @@ class NetAppApiClientTestCase(test.TestCase):
         drv = self._driver
         for flag in drv.REQUIRED_FLAGS:
             setattr(netapp.FLAGS, flag, 'val')
-
-        drv.check_configuration()
+        conf_obj = Configuration(netapp.FLAGS)
+        drv.check_configuration(conf_obj)
 
     def test_failing_setup(self):
         drv = self._driver
-        self.assertRaises(exception.Error, drv.check_configuration)
+        self.assertRaises(exception.Error, drv.check_configuration,
+                          Configuration(netapp.FLAGS))

@@ -45,7 +45,7 @@ FLAGS = flags.FLAGS
 
 
 class FakeShareDriver(object):
-    def __init__(self, db):
+    def __init__(self, db, **kwargs):
         self.db = db
 
     def allocate_container(self, context, share):

@@ -40,7 +40,7 @@ share_opts = [
     cfg.IntOpt('num_shell_tries',
                default=3,
                help='number of times to attempt to run flakey shell commands'),
-    cfg.IntOpt('reserved_percentage',
+    cfg.IntOpt('reserved_share_percentage',
                default=0,
                help='The percentage of backend capacity reserved'),
     cfg.StrOpt('share_backend_name',
@@ -64,7 +64,6 @@ class ExecuteMixin(object):
         if self.configuration:
             self.configuration.append_config_values(share_opts)
         self.set_execute(kwargs.pop('execute', utils.execute))
-        super(ExecuteMixin, self).__init__(*args, **kwargs)
 
     def set_execute(self, execute):
         self._execute = execute

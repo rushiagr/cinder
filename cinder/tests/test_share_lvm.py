@@ -24,6 +24,7 @@ from cinder import exception
 from cinder import flags
 from cinder.openstack.common import importutils
 from cinder.openstack.common import log as logging
+from cinder.share.configuration import Configuration
 from cinder.share.drivers import lvm
 from cinder import test
 from cinder.tests.db import fakes as db_fakes
@@ -84,9 +85,11 @@ class LVMShareDriverTestCase(test.TestCase):
 
         self._helper_cifs = self.mox.CreateMock(lvm.CIFSHelper)
         self._helper_nfs = self.mox.CreateMock(lvm.NFSHelper)
+        self.fake_conf = Configuration(None)
         self._db = self.mox.CreateMockAnything()
         self._driver = lvm.LVMShareDriver(self._db,
-                                          execute=self._execute)
+                                          execute=self._execute,
+                                          configuration=self.fake_conf)
         self._driver._helpers = {
             'CIFS': self._helper_cifs,
             'NFS': self._helper_nfs,
@@ -109,7 +112,8 @@ class LVMShareDriverTestCase(test.TestCase):
         ]
         for helper, path in helpers:
             importutils.import_class(path).AndReturn(helper)
-            helper.__call__(fake_utils.fake_execute).\
+            helper.__call__(fake_utils.fake_execute,
+                            self.fake_conf).\
                 AndReturn(helper)
             helper.init()
         self.mox.ReplayAll()
@@ -243,10 +247,10 @@ class LVMShareDriverTestCase(test.TestCase):
         self.mox.ReplayAll()
         ret = self._driver.get_share_stats(refresh=True)
         expected_ret = {
-            'share_backend_name': 'LVM_iSCSI',
+            'share_backend_name': 'LVM',
             'vendor_name': 'Open Source',
             'driver_version': '1.0',
-            'storage_protocol': 'iSCSI',
+            'storage_protocol': 'NFS_CIFS',
             'total_capacity_gb': 5.38,
             'free_capacity_gb': 4.30,
             'reserved_percentage': 1,
@@ -267,10 +271,10 @@ class LVMShareDriverTestCase(test.TestCase):
         self.mox.ReplayAll()
         ret = self._driver.get_share_stats(refresh=True)
         expected_ret = {
-            'share_backend_name': 'LVM_iSCSI',
+            'share_backend_name': 'LVM',
             'vendor_name': 'Open Source',
             'driver_version': '1.0',
-            'storage_protocol': 'iSCSI',
+            'storage_protocol': 'NFS_CIFS',
             'total_capacity_gb': 0,
             'free_capacity_gb': 0,
             'reserved_percentage': 1,
@@ -473,7 +477,8 @@ class NFSHelperTestCase(test.TestCase):
         fake_utils.stub_out_utils_execute(self.stubs)
         FLAGS.set_default('share_export_ip', '127.0.0.1')
         self._execute = fake_utils.fake_execute
-        self._helper = lvm.NFSHelper(self._execute)
+        self.fake_conf = Configuration(None)
+        self._helper = lvm.NFSHelper(self._execute, self.fake_conf)
         fake_utils.fake_execute_clear_log()
 
     def tearDown(self):
@@ -487,7 +492,7 @@ class NFSHelperTestCase(test.TestCase):
             AndRaise(exception.ProcessExecutionError)
         self.mox.ReplayAll()
         self.assertRaises(exception.Error, lvm.NFSHelper.__init__,
-                          self._helper, self._execute)
+                          self._helper, self._execute, self.fake_conf)
 
     def test_create_export(self):
         self.mox.ReplayAll()
@@ -543,7 +548,8 @@ class CIFSNetConfHelperTestCase(test.TestCase):
         FLAGS.set_default('share_export_ip', '127.0.0.1')
         self.share = fake_share()
         self._execute = fake_utils.fake_execute
-        self._helper = lvm.CIFSNetConfHelper(self._execute)
+        self.fake_conf = Configuration(None)
+        self._helper = lvm.CIFSNetConfHelper(self._execute, self.fake_conf)
         fake_utils.fake_execute_clear_log()
 
     def tearDown(self):

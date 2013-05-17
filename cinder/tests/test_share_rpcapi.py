@@ -116,7 +116,10 @@ class ShareRpcAPITestCase(test.TestCase):
                              rpc_method='cast',
                              share=self.fake_share,
                              host='fake_host1',
-                             snapshot_id='fake_snapshot_id')
+                             snapshot_id='fake_snapshot_id',
+                             filter_properties=None,
+                             allow_reschedule=True,
+                             request_spec=None)
 
     def test_delete_share(self):
         self._test_share_api('delete_share',
