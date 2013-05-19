@@ -38,6 +38,20 @@ VOLUME_SERVICES = [
          availability_zone='zone4', updated_at=timeutils.utcnow()),
 ]
 
+SHARE_SERVICES = [
+    dict(id=1, host='host1', topic='share', disabled=False,
+         availability_zone='zone1', updated_at=timeutils.utcnow()),
+    dict(id=2, host='host2', topic='share', disabled=False,
+         availability_zone='zone1', updated_at=timeutils.utcnow()),
+    dict(id=3, host='host3', topic='share', disabled=False,
+         availability_zone='zone2', updated_at=timeutils.utcnow()),
+    dict(id=4, host='host4', topic='share', disabled=False,
+         availability_zone='zone3', updated_at=timeutils.utcnow()),
+    # service on host5 is disabled
+    dict(id=5, host='host5', topic='share', disabled=True,
+         availability_zone='zone4', updated_at=timeutils.utcnow()),
+]
+
 
 class FakeFilterScheduler(filter_scheduler.FilterScheduler):
     def __init__(self, *args, **kwargs):
@@ -81,3 +95,9 @@ def mox_host_manager_db_calls(mock, context):
 
     db.service_get_all_by_topic(mox.IgnoreArg(),
                                 mox.IgnoreArg()).AndReturn(VOLUME_SERVICES)
+
+def mox_host_manager_db_calls_share(mock, context):
+    mock.StubOutWithMock(db, 'service_get_all_by_topic')
+
+    db.service_get_all_by_topic(mox.IgnoreArg(),
+                                mox.IgnoreArg()).AndReturn(SHARE_SERVICES)

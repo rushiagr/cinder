@@ -179,7 +179,7 @@ class FilterSchedulerTestCase(test_scheduler.SchedulerTestCase):
                        fake_get_filtered_hosts)
         self.stubs.Set(weights.HostWeightHandler,
                        'get_weighed_objects', _fake_weigh_objects)
-        fakes.mox_host_manager_db_calls(self.mox, fake_context)
+        fakes.mox_host_manager_db_calls_share(self.mox, fake_context)
 
         request_spec = {'share_type': {'name': 'LVM_NFS'},
                         'sharee_properties': {'project_id': 1,
