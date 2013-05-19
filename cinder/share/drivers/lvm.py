@@ -161,7 +161,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
 
         data['total_capacity_gb'] = 0
         data['free_capacity_gb'] = 0
-        data['reserved_percentage'] = self.configuration.reserved_percentage
+        data['reserved_percentage'] = self.configuration.reserved_share_percentage
         data['QoS_support'] = False
 
         try:
