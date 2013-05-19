@@ -91,8 +91,7 @@ class ShareManager(manager.SchedulerDependentManager):
         self.publish_service_capabilities(ctxt)
 
     def create_share(self, context, share_id, request_spec=None,
-                     filter_properties=None, allow_reschedule=True,
-                     snapshot_id=None):
+                     filter_properties=None, snapshot_id=None):
         """Creates a share."""
         context = context.elevated()
         if filter_properties is None:

@@ -173,6 +173,6 @@ class ShareDriver(object):
 
         data['total_capacity_gb'] = 'infinite'
         data['free_capacity_gb'] = 'infinite'
-        data['reserved_percentage'] = 100
+        data['reserved_percentage'] = 0
         data['QoS_support'] = False
         self._stats = data

@@ -130,8 +130,6 @@ class SimpleScheduler(chance.ChanceScheduler):
             if utils.service_is_up(service) and not service['disabled']:
                 updated_share = driver.share_update_db(context, share_id,
                                                        service['host'])
-                #FIXME(rushiagr): align parameters here to the def
-                #                   create_share in rpcapi.py
                 self.share_rpcapi.create_share(context,
                                                updated_share,
                                                service['host'],

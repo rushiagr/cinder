@@ -46,14 +46,12 @@ class ShareAPI(cinder.openstack.common.rpc.proxy.RpcProxy):
 
     def create_share(self, ctxt, share, host,
                      request_spec, filter_properties,
-                     allow_reschedule=True,
                      snapshot_id=None):
         self.cast(ctxt,
                   self.make_msg('create_share',
                                 share_id=share['id'],
                                 request_spec=request_spec,
                                 filter_properties=filter_properties,
-                                allow_reschedule=allow_reschedule,
                                 snapshot_id=snapshot_id),
                   topic=rpc.queue_get_for(ctxt,
                                           self.topic,
