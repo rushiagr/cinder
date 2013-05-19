@@ -54,7 +54,7 @@ share_opts = [
                help='Name for the VG that will contain exported shares'),
     cfg.ListOpt('share_lvm_helpers',
                 default=[
-                    'CIFS=cinder.share.drivers.lvm.CIFSHelper',
+                    'CIFS=cinder.share.drivers.lvm.CIFSNetConfHelper',
                     'NFS=cinder.share.drivers.lvm.NFSHelper',
                 ],
                 help='Specify list of share export helpers.'),
