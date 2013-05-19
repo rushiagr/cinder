@@ -83,7 +83,7 @@ class LVMShareDriverTestCase(test.TestCase):
         FLAGS.set_default('share_volume_group', 'fakevg')
         FLAGS.set_default('share_export_ip', '10.0.0.1')
 
-        self._helper_cifs = self.mox.CreateMock(lvm.CIFSHelper)
+        self._helper_cifs = self.mox.CreateMock(lvm.CIFSNetConfHelper)
         self._helper_nfs = self.mox.CreateMock(lvm.NFSHelper)
         self.fake_conf = Configuration(None)
         self._db = self.mox.CreateMockAnything()
@@ -107,7 +107,7 @@ class LVMShareDriverTestCase(test.TestCase):
     def test_do_setup(self):
         self.mox.StubOutWithMock(importutils, 'import_class')
         helpers = [
-            (self._helper_cifs, 'cinder.share.drivers.lvm.CIFSHelper'),
+            (self._helper_cifs, 'cinder.share.drivers.lvm.CIFSNetConfHelper'),
             (self._helper_nfs, 'cinder.share.drivers.lvm.NFSHelper'),
         ]
         for helper, path in helpers:
@@ -253,7 +253,7 @@ class LVMShareDriverTestCase(test.TestCase):
             'storage_protocol': 'NFS_CIFS',
             'total_capacity_gb': 5.38,
             'free_capacity_gb': 4.30,
-            'reserved_percentage': 1,
+            'reserved_percentage': 0,
             'QoS_support': False,
         }
         self.assertEqual(fake_utils.fake_execute_get_log(), expected_exec)
@@ -277,7 +277,7 @@ class LVMShareDriverTestCase(test.TestCase):
             'storage_protocol': 'NFS_CIFS',
             'total_capacity_gb': 0,
             'free_capacity_gb': 0,
-            'reserved_percentage': 1,
+            'reserved_percentage': 0,
             'QoS_support': False,
         }
         self.assertEqual(fake_utils.fake_execute_get_log(), expected_exec)
