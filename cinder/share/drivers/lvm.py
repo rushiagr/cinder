@@ -79,7 +79,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         out, err = self._execute('vgs', '--noheadings', '-o', 'name',
                                  run_as_root=True)
         volume_groups = out.split()
-        if not self.configuration.share_volume_group in volume_groups:
+        if self.configuration.share_volume_group not in volume_groups:
             msg = (_("share volume group %s doesn't exist")
                    % self.configuration.share_volume_group)
             raise exception.InvalidParameterValue(err=msg)
