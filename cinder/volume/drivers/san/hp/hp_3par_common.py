@@ -50,7 +50,6 @@ from oslo.config import cfg
 
 from cinder import context
 from cinder import exception
-from cinder.openstack.common import lockutils
 from cinder.openstack.common import log as logging
 from cinder import utils
 from cinder.volume import volume_types
@@ -412,15 +411,14 @@ exit
         return ports
 
     def get_volume_stats(self, refresh, client):
-        # const to convert MiB to GB
-        const = 0.0009765625
-
         if refresh:
             self._update_volume_stats(client)
 
         return self.stats
 
     def _update_volume_stats(self, client):
+        # const to convert MiB to GB
+        const = 0.0009765625
 
         # storage_protocol and volume_backend_name are
         # set in the child classes
@@ -597,7 +595,7 @@ exit
 
         return status
 
-    @lockutils.synchronized('3parclone', 'cinder-', True)
+    @utils.synchronized('3parclone', external=True)
     def create_cloned_volume(self, volume, src_vref, client):
 
         try:

@@ -22,6 +22,7 @@ import os
 from oslo.config import cfg
 
 from cinder import exception
+from cinder.image import image_utils
 from cinder.openstack.common import log as logging
 from cinder.volume import driver
 
@@ -29,11 +30,11 @@ LOG = logging.getLogger(__name__)
 
 volume_opts = [
     cfg.StrOpt('nfs_shares_config',
-               default=None,
+               default='/etc/cinder/nfs_shares',
                help='File with the list of available nfs shares'),
     cfg.StrOpt('nfs_mount_point_base',
                default='$state_path/mnt',
-               help='Base dir where nfs expected to be mounted'),
+               help='Base dir containing mount points for nfs shares'),
     cfg.StrOpt('nfs_disk_util',
                default='df',
                help='Use du or df for free space calculation'),
@@ -108,6 +109,20 @@ class RemoteFsDriver(driver.VolumeDriver):
         """returns string that represents hash of base_str
         (in a hex format)."""
         return hashlib.md5(base_str).hexdigest()
+
+    def copy_image_to_volume(self, context, volume, image_service, image_id):
+        """Fetch the image from image_service and write it to the volume."""
+        image_utils.fetch_to_raw(context,
+                                 image_service,
+                                 image_id,
+                                 self.local_path(volume))
+
+    def copy_volume_to_image(self, context, volume, image_service, image_meta):
+        """Copy the volume to the specified image."""
+        image_utils.upload_volume(context,
+                                  image_service,
+                                  image_meta,
+                                  self.local_path(volume))
 
 
 class NfsDriver(RemoteFsDriver):
