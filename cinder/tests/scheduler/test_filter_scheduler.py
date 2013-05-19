@@ -112,6 +112,82 @@ class FilterSchedulerTestCase(test_scheduler.SchedulerTestCase):
         weighed_host = sched._schedule(fake_context, request_spec, {})
         self.assertTrue(weighed_host.obj is not None)
 
+    @test.skip_if(not test_utils.is_cinder_installed(),
+                  'Test requires Cinder installed (try setup.py develop')
+    def test_create_share_no_hosts(self):
+        """
+        Ensure empty hosts & child_zones result in NoValidHosts exception.
+        """
+        def _fake_empty_call_zone_method(*args, **kwargs):
+            return []
+
+        sched = fakes.FakeFilterScheduler()
+
+        fake_context = context.RequestContext('user', 'project')
+        request_spec = {'share_properties': {'project_id': 1,
+                                              'size': 1},
+                        'share_type': {'name': 'LVM_NFS'},
+                        'share_id': ['fake-id1']}
+        self.assertRaises(exception.NoValidHost, sched.schedule_create_share,
+                          fake_context, request_spec, {})
+
+    @test.skip_if(not test_utils.is_cinder_installed(),
+                  'Test requires Cinder installed (try setup.py develop')
+    def test_create_share_non_admin(self):
+        """Test creating share passing a non-admin context.
+        
+        DB actions should work."""
+        self.was_admin = False
+
+        def fake_get(context, *args, **kwargs):
+            # make sure this is called with admin context, even though
+            # we're using user context below
+            self.was_admin = context.is_admin
+            return {}
+
+        sched = fakes.FakeFilterScheduler()
+        self.stubs.Set(sched.host_manager, 'get_all_host_states', fake_get)
+
+        fake_context = context.RequestContext('user', 'project')
+
+        request_spec = {'share_properties': {'project_id': 1,
+                                              'size': 1},
+                        'share_type': {'name': 'LVM_NFS'},
+                        'share_id': ['fake-id1']}
+        self.assertRaises(exception.NoValidHost, sched.schedule_create_share,
+                          fake_context, request_spec, {})
+        self.assertTrue(self.was_admin)
+
+    @test.skip_if(not test_utils.is_cinder_installed(),
+                  'Test requires Cinder installed (try setup.py develop')
+    def test_schedule_happy_day_share(self):
+        """Make sure there's nothing glaringly wrong with _schedule_share()
+        by doing a happy day pass through."""
+
+        self.next_weight = 1.0
+
+        def _fake_weigh_objects(_self, functions, hosts, options):
+            self.next_weight += 2.0
+            host_state = hosts[0]
+            return [weights.WeighedHost(host_state, self.next_weight)]
+
+        sched = fakes.FakeFilterScheduler()
+        fake_context = context.RequestContext('user', 'project',
+                                              is_admin=True)
+
+        self.stubs.Set(sched.host_manager, 'get_filtered_hosts',
+                       fake_get_filtered_hosts)
+        self.stubs.Set(weights.HostWeightHandler,
+                       'get_weighed_objects', _fake_weigh_objects)
+        fakes.mox_host_manager_db_calls(self.mox, fake_context)
+
+        request_spec = {'share_type': {'name': 'LVM_NFS'},
+                        'sharee_properties': {'project_id': 1,
+                                              'size': 1}}
+        self.mox.ReplayAll()
+        weighed_host = sched._schedule_share(fake_context, request_spec, {})
+        self.assertTrue(weighed_host.obj is not None)
+
     def test_max_attempts(self):
         self.flags(scheduler_max_attempts=4)
 
