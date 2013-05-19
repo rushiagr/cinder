@@ -135,7 +135,7 @@ class FilterSchedulerTestCase(test_scheduler.SchedulerTestCase):
                   'Test requires Cinder installed (try setup.py develop')
     def test_create_share_non_admin(self):
         """Test creating share passing a non-admin context.
-        
+
         DB actions should work."""
         self.was_admin = False
 
@@ -146,7 +146,9 @@ class FilterSchedulerTestCase(test_scheduler.SchedulerTestCase):
             return {}
 
         sched = fakes.FakeFilterScheduler()
-        self.stubs.Set(sched.host_manager, 'get_all_host_states_share', fake_get)
+        self.stubs.Set(sched.host_manager,
+                       'get_all_host_states_share',
+                       fake_get)
 
         fake_context = context.RequestContext('user', 'project')
 

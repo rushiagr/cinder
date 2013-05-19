@@ -96,6 +96,7 @@ def mox_host_manager_db_calls(mock, context):
     db.service_get_all_by_topic(mox.IgnoreArg(),
                                 mox.IgnoreArg()).AndReturn(VOLUME_SERVICES)
 
+
 def mox_host_manager_db_calls_share(mock, context):
     mock.StubOutWithMock(db, 'service_get_all_by_topic')
 
