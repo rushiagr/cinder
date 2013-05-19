@@ -293,9 +293,7 @@ class FilterScheduler(driver.Scheduler):
                                                             filter_properties)
         best_host = weighed_hosts[0]
         LOG.debug(_("Choosing for share: %(best_host)s") % locals())
-        #NOTE(rushiagr): we're assuming for now that the hosts which run shares
-        #               are the ones which runs volumes, and hence, we're
-        #               updating the available space parameters at same place
+        #NOTE(rushiagr): updating the available space parameters at same place
         best_host.obj.consume_from_volume(share_properties)
         return best_host
 

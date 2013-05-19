@@ -146,7 +146,7 @@ class FilterSchedulerTestCase(test_scheduler.SchedulerTestCase):
             return {}
 
         sched = fakes.FakeFilterScheduler()
-        self.stubs.Set(sched.host_manager, 'get_all_host_states', fake_get)
+        self.stubs.Set(sched.host_manager, 'get_all_host_states_share', fake_get)
 
         fake_context = context.RequestContext('user', 'project')
 
