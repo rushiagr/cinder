@@ -220,7 +220,7 @@ class HostManagerTestCase(test.TestCase):
 
 
 class HostStateTestCase(test.TestCase):
-    """Test case for HostState class"""
+    """Test case for HostState class."""
 
     def test_update_from_volume_capability(self):
         fake_host = host_manager.HostState('host1')

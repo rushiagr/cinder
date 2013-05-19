@@ -15,7 +15,7 @@
 #    under the License.
 
 """
-Unit Tests for cinder.volume.rpcapi
+Unit Tests for cinder.volume.rpcapi.
 """
 
 

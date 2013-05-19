@@ -152,7 +152,7 @@ class HostState(object):
             self.updated = capability['timestamp']
 
     def consume_from_volume(self, volume):
-        """Incrementally update host state from an volume"""
+        """Incrementally update host state from an volume."""
         volume_gb = volume['size']
         if self.free_capacity_gb == 'infinite':
             # There's virtually infinite space on back-end

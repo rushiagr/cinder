@@ -13,7 +13,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-"""Unit tests for the NFS driver module"""
+"""Unit tests for the NFS driver module."""
 
 import mox
 import os
@@ -470,7 +470,7 @@ class LVMShareDriverTestCase(test.TestCase):
 
 
 class NFSHelperTestCase(test.TestCase):
-    """Test case for NFS driver"""
+    """Test case for NFS driver."""
 
     def setUp(self):
         super(NFSHelperTestCase, self).setUp()

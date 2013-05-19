@@ -428,28 +428,28 @@ class NetAppNASHelperBase(object):
         self._client = suds_client
 
     def create_share(self, target_id, share):
-        """Creates NAS share"""
+        """Creates NAS share."""
         raise NotImplementedError()
 
     def delete_share(self, share):
-        """Deletes NAS share"""
+        """Deletes NAS share."""
         raise NotImplementedError()
 
     def allow_access(self, context, share, new_rules):
-        """Allows new_rules to a given NAS storage for IPs in :new_rules"""
+        """Allows new_rules to a given NAS storage for IPs in :new_rules."""
         raise NotImplementedError()
 
     def deny_access(self, context, share, new_rules):
-        """Denies new_rules to a given NAS storage for IPs in :new_rules"""
+        """Denies new_rules to a given NAS storage for IPs in :new_rules:."""
         raise NotImplementedError()
 
     def get_target(self, share):
-        """Returns host where the share located."""
+        """Returns host where the share located.."""
         raise NotImplementedError()
 
 
 class NetAppNFSHelper(NetAppNASHelperBase):
-    """Netapp specific NFS sharing driver"""
+    """Netapp specific NFS sharing driver."""
 
     def __init__(self, suds_client, config_object):
         self.configuration = config_object
@@ -503,7 +503,7 @@ class NetAppNFSHelper(NetAppNASHelperBase):
                                      xml_args)
 
     def allow_access(self, context, share, access):
-        """Allows access to a given NFS storage for IPs in :access:"""
+        """Allows access to a given NFS storage for IPs in :access:."""
         if access['access_type'] != 'ip':
             raise exception.Error(('Invalid access type supplied. '
                                    'Only \'ip\' type is supported'))
@@ -516,7 +516,7 @@ class NetAppNFSHelper(NetAppNASHelperBase):
         self._modify_rule(share, new_rules_xml)
 
     def deny_access(self, context, share, access):
-        """Denies access to a given NFS storage for IPs in :access:"""
+        """Denies access to a given NFS storage for IPs in :access:."""
         denied_ips = access['access_to']
         existing_rules = self._get_exisiting_rules(share)
 
@@ -537,7 +537,7 @@ class NetAppNFSHelper(NetAppNASHelperBase):
         return self._get_export_path(share)[0]
 
     def _modify_rule(self, share, rw_rules):
-        """Modifies access rule for a share"""
+        """Modifies access rule for a share."""
         target, export_path = self._get_export_path(share)
 
         xml_args = ('<persistent>true</persistent>'
@@ -641,13 +641,13 @@ class NetAppCIFSHelper(NetAppNASHelperBase):
         return cifs_location
 
     def delete_share(self, share):
-        """Deletes CIFS storage"""
+        """Deletes CIFS storage."""
         host_ip, share_name = self._get_export_location(share)
         xml_args = '<share-name>%s</share-name>' % share_name
         self._client.send_request_to(host_ip, 'cifs-share-delete', xml_args)
 
     def allow_access(self, context, share, access):
-        """Allows access to a given CIFS storage for IPs in :access"""
+        """Allows access to a given CIFS storage for IPs in :access:."""
         if access['access_type'] != 'passwd':
             ex_text = ('NetApp only supports "passwd" access type for CIFS.')
             raise exception.Error(ex_text)

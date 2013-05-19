@@ -68,14 +68,14 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
     """Executes commands relating to Shares."""
 
     def __init__(self, db, *args, **kwargs):
-        """Do initialization"""
+        """Do initialization."""
         super(LVMShareDriver, self).__init__(*args, **kwargs)
         self.db = db
         self._helpers = None
         self.configuration.append_config_values(share_opts)
 
     def check_for_setup_error(self):
-        """Returns an error if prerequisites aren't met"""
+        """Returns an error if prerequisites aren't met."""
         out, err = self._execute('vgs', '--noheadings', '-o', 'name',
                                  run_as_root=True)
         volume_groups = out.split()
@@ -88,7 +88,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
             raise exception.InvalidParameterValue(err=msg)
 
     def do_setup(self, context):
-        """Any initialization the volume driver does while starting"""
+        """Any initialization the volume driver does while starting."""
         super(LVMShareDriver, self).do_setup(context)
         self._setup_helpers()
         for helper in self._helpers.values():
@@ -182,11 +182,11 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         self._stats = data
 
     def deallocate_container(self, ctx, share):
-        """Remove LVM volume that will be represented as share"""
+        """Remove LVM volume that will be represented as share."""
         self._deallocate_container(share['name'])
 
     def allocate_container(self, ctx, share):
-        """Create LVM volume that will be represented as share"""
+        """Create LVM volume that will be represented as share."""
         self._allocate_container(share['name'], '%sG' % share['size'])
         #create file system
         device_name = self._local_path(share)
@@ -225,7 +225,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
                 LOG.info('Unable to delete %s', mount_path)
 
     def create_share(self, ctx, share):
-        """Is called after allocate_space to create share on the volume"""
+        """Is called after allocate_space to create share on the volume."""
         location = self._get_mount_path(share)
         location = self._get_helper(share).create_export(location,
                                                          share['name'])
@@ -247,7 +247,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
                                               recreate=True)
 
     def delete_share(self, ctx, share):
-        """Delete a share"""
+        """Delete a share."""
         try:
             location = self._get_mount_path(share)
             self._get_helper(share).remove_export(location, share['name'])
@@ -261,14 +261,14 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         self._deallocate_container(snapshot['name'])
 
     def allow_access(self, ctx, share, access):
-        """Allow access to the share"""
+        """Allow access to the share."""
         location = self._get_mount_path(share)
         self._get_helper(share).allow_access(location, share['name'],
                                              access['access_type'],
                                              access['access_to'])
 
     def deny_access(self, ctx, share, access):
-        """Allow access to the share"""
+        """Allow access to the share."""
         location = self._get_mount_path(share)
         self._get_helper(share).deny_access(location, share['name'],
                                             access['access_type'],
@@ -283,7 +283,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
             raise exception.InvalidShare(reason='Wrong share type')
 
     def _mount_device(self, share, device_name):
-        """Mount LVM share and ignore if already mounted"""
+        """Mount LVM share and ignore if already mounted."""
         mount_path = self._get_mount_path(share)
         self._execute('mkdir', '-p', mount_path)
         try:
@@ -299,7 +299,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
         return mount_path
 
     def _get_mount_path(self, share):
-        """Returns path where share is mounted"""
+        """Returns path where share is mounted."""
         return os.path.join(self.configuration.share_export_root,
                             share['name'])
 
@@ -321,7 +321,7 @@ class LVMShareDriver(driver.ExecuteMixin, driver.ShareDriver):
 
 
 class NASHelperBase(object):
-    """Interface to work with share"""
+    """Interface to work with share."""
 
     def __init__(self, execute, config_object):
         self.configuration = config_object
@@ -331,25 +331,25 @@ class NASHelperBase(object):
         pass
 
     def create_export(self, local_path, share_name, recreate=False):
-        """Create new export, delete old one if exists"""
+        """Create new export, delete old one if exists."""
         raise NotImplementedError()
 
     def remove_export(self, local_path, share_name):
-        """Remove export"""
+        """Remove export."""
         raise NotImplementedError()
 
     def allow_access(self, local_path, share_name, access_type, access):
-        """Allow access to the host"""
+        """Allow access to the host."""
         raise NotImplementedError()
 
     def deny_access(self, local_path, share_name, access_type, access,
                     force=False):
-        """Deny access to the host"""
+        """Deny access to the host."""
         raise NotImplementedError()
 
 
 class NFSHelper(NASHelperBase):
-    """Interface to work with share"""
+    """Interface to work with share."""
 
     def __init__(self, execute, config_object):
         super(NFSHelper, self).__init__(execute, config_object)
@@ -360,11 +360,11 @@ class NFSHelper(NASHelperBase):
             raise exception.Error('NFS server not found')
 
     def create_export(self, local_path, share_name, recreate=False):
-        """Create new export, delete old one if exists"""
+        """Create new export, delete old one if exists."""
         return ':'.join([self.configuration.share_export_ip, local_path])
 
     def remove_export(self, local_path, share_name):
-        """Remove export"""
+        """Remove export."""
         pass
 
     def allow_access(self, local_path, share_name, access_type, access):
@@ -386,7 +386,7 @@ class NFSHelper(NASHelperBase):
 
     def deny_access(self, local_path, share_name, access_type, access,
                     force=False):
-        """Deny access to the host"""
+        """Deny access to the host."""
         self._execute('exportfs', '-u', ':'.join([access, local_path]),
                       run_as_root=True, check_exit_code=False)
 
@@ -395,18 +395,18 @@ class CIFSHelper(NASHelperBase):
     """Class provides functionality to operate with cifs shares"""
 
     def __init__(self, execute, config_object):
-        """Store executor and configuration path"""
+        """Store executor and configuration path."""
         super(CIFSHelper, self).__init__(execute, config_object)
         self.config = self.configuration.smb_config_path
         self.test_config = "%s_" % (self.config,)
 
     def init(self):
-        """Initialize environment"""
+        """Initialize environment."""
         self._recreate_config()
         self._ensure_daemon_started()
 
     def create_export(self, local_path, share_name, recreate=False):
-        """Create new export, delete old one if exists"""
+        """Create new export, delete old one if exists."""
         parser = ConfigParser.ConfigParser()
         parser.read(self.config)
         #delete old one
@@ -433,7 +433,7 @@ class CIFSHelper(NASHelperBase):
         return '//%s/%s' % (self.configuration.share_export_ip, share_name)
 
     def remove_export(self, local_path, share_name):
-        """Remove export"""
+        """Remove export."""
         parser = ConfigParser.ConfigParser()
         parser.read(self.config)
         #delete old one
@@ -444,7 +444,7 @@ class CIFSHelper(NASHelperBase):
                       run_as_root=True)
 
     def allow_access(self, local_path, share_name, access_type, access):
-        """Allow access to the host"""
+        """Allow access to the host."""
         if access_type != 'ip':
             reason = 'only ip access type allowed'
             raise exception.InvalidShareAccess(reason)
@@ -461,7 +461,7 @@ class CIFSHelper(NASHelperBase):
 
     def deny_access(self, local_path, share_name, access_type, access,
                     force=False):
-        """Deny access to the host"""
+        """Deny access to the host."""
         parser = ConfigParser.ConfigParser()
         try:
             parser.read(self.config)
@@ -475,7 +475,7 @@ class CIFSHelper(NASHelperBase):
 
     def _ensure_daemon_started(self):
         """
-        FYI: smbd starts at least two processes
+        FYI: smbd starts at least two processes.
         """
         out, _ = self._execute(*'ps -C smbd -o args='.split(),
                                check_exit_code=False)
@@ -495,7 +495,7 @@ class CIFSHelper(NASHelperBase):
             self._execute(*cmd.split(), run_as_root=True)
 
     def _recreate_config(self):
-        """create new SAMBA configuration file"""
+        """create new SAMBA configuration file."""
         if os.path.exists(self.config):
             os.unlink(self.config)
         parser = ConfigParser.ConfigParser()
@@ -506,7 +506,7 @@ class CIFSHelper(NASHelperBase):
         self._update_config(parser, restart=False)
 
     def _update_config(self, parser, restart=True):
-        """Check if new configuration is correct and save it"""
+        """Check if new configuration is correct and save it."""
         #Check that configuration is correct
         with open(self.test_config, 'w') as fp:
             parser.write(fp)

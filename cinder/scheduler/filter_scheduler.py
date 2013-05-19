@@ -117,7 +117,7 @@ class FilterScheduler(driver.Scheduler):
 
     def _log_volume_error(self, volume_id, retry):
         """If the request contained an exception from a previous volume
-        create operation, log it to aid debugging
+        create operation, log it to aid debugging.
         """
         exc = retry.pop('exc', None)  # string-ified exception from volume
         if not exc:
@@ -328,7 +328,7 @@ class FilterScheduler(driver.Scheduler):
 
     def _log_share_error(self, share_id, retry):
         """If the request contained an exception from a previous share
-        create operation, log it to aid debugging
+        create operation, log it to aid debugging.
         """
         exc = retry.pop('exc', None)  # string-ified exception from share
         if not exc:
