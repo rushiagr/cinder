@@ -239,7 +239,6 @@ class FilterScheduler(driver.Scheduler):
         self.share_rpcapi.create_share(context, updated_share, host,
                                        request_spec=request_spec,
                                        filter_properties=filter_properties,
-                                       allow_reschedule=True,
                                        snapshot_id=snapshot_id)
 
     def _schedule_share(self, context, request_spec, filter_properties=None):
