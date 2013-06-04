@@ -43,6 +43,9 @@ filer password
     1. Make _remember_share() more generic, or remove altogether
     2. Change _client.send_request_to() to some other name
     3. Remove references of cmode_filer
+    4. Move away from flags and use oslo.cfg, and configuration.py settings
+    5. Pass config values down to helpers as you cannot directly use them now,
+        but maybe we can use CONF.flags? Rethink!!
 
 '''
 
@@ -71,8 +74,8 @@ NETAPP_NAS_OPTS = [
 ]
 
 
-FLAGS = flags.FLAGS
-FLAGS.register_opts(NETAPP_NAS_OPTS)
+CONF= cfg.CONF
+CONF.register_opts(NETAPP_NAS_OPTS)
 
 
 class NetAppClusteredShareDriver(driver.ShareDriver):
@@ -298,17 +301,17 @@ class NetAppApiClient(object):
         self._client = None
 
     def do_setup(self):
-        protocol = 'https' if FLAGS.netapp_nas_transport_type == 'https' else 'http'
+        protocol = 'https' if CONF.netapp_nas_transport_type == 'https' else 'http'
 
-        self._client = NaServer(host=FLAGS.netapp_nas_server_hostname,
+        self._client = NaServer(host=CONF.netapp_nas_server_hostname,
                                 server_type=NaServer.SERVER_TYPE_FILER,
-                                transport_type=FLAGS.netapp_nas_transport_type,
+                                transport_type=CONF.netapp_nas_transport_type,
                                 style=NaServer.STYLE_LOGIN_PASSWORD,
-                                username=FLAGS.netapp_nas_login,
-                                password=FLAGS.netapp_nas_password)
+                                username=CONF.netapp_nas_login,
+                                password=CONF.netapp_nas_password)
         self._client.set_api_version(1,15)
         self._client.set_vserver('rushi')
-        #LOG.debug(_('Using NetApp filer:'), FLAGS.netapp_nas_server_hostname)
+        #LOG.debug(_('Using NetApp filer:'), CONF.netapp_nas_server_hostname)
 
     def send_request_to(self, request, xml_args=None,
                         do_response_check=True):
@@ -340,7 +343,7 @@ class NetAppApiClient(object):
         
         if not aggr_list_elements:
             msg = _("No aggregate assigned to vserver %s")
-            raise exception.Error(msg % FLAGS.netapp_nas_vserver)
+            raise exception.Error(msg % CONF.netapp_nas_vserver)
         
         # return dict of key-value pair of aggr_name:size
         aggr_dict = {}
@@ -385,7 +388,7 @@ class NetAppApiClient(object):
     def check_configuration():
         """Ensure that the flags we care about are set."""
         for flag in NetAppApiClient.REQUIRED_FLAGS:
-            if not getattr(FLAGS, flag, None):
+            if not getattr(CONF, flag, None):
                 raise exception.Error(_('%s is not set') % flag)
 
 
@@ -451,7 +454,7 @@ class NetAppNFSHelper(NetAppNASHelperBase):
         client.send_request_to('nfs-exportfs-append-rules-2',
                                args_xml % export_pathname)
 
-        export_ip = FLAGS.netapp_nas_server_hostname
+        export_ip = CONF.netapp_nas_server_hostname
         export_location = ':'.join([export_ip, export_pathname])
         return export_location
 
