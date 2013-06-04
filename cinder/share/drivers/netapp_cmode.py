@@ -717,7 +717,7 @@ if __name__ == '__main__':
     print 'setup done'
     print drv._find_best_aggregate()
     print 'found best aggr'
-    share = {'id': '12-34', 'size': 1, 'share_type': 'NfS'}
+    share = {'id': '12-345', 'size': 1, 'share_type': 'NfS'}
     drv.allocate_container('blah', share)
     print 'share allocated, table:', drv._share_table
     
