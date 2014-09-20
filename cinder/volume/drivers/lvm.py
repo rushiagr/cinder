@@ -117,7 +117,7 @@ class LVMVolumeDriver(driver.VolumeDriver):
     def _sizestr(self, size_in_g):
         if int(size_in_g) == 0:
             return '100m'
-        return '%sg' % size_in_g
+        return '%sm' % size_in_g
 
     def _volume_not_present(self, volume_name):
         return self.vg.get_volume(volume_name) is None
@@ -164,7 +164,7 @@ class LVMVolumeDriver(driver.VolumeDriver):
 
         # clear_volume expects sizes in MiB, we store integer GiB
         # be sure to convert before passing in
-        vol_sz_in_meg = size_in_g * units.Ki
+        vol_sz_in_meg = size_in_g 
 
         volutils.clear_volume(
             vol_sz_in_meg, dev_path,

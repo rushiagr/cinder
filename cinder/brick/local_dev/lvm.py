@@ -347,8 +347,8 @@ class LVM(executor.Executor):
             for vg in vgs:
                 fields = vg.split(':')
                 vg_list.append({'name': fields[0],
-                                'size': float(fields[1]),
-                                'available': float(fields[2]),
+                                'size': float(fields[1])*1024,
+                                'available': float(fields[2])*1024,
                                 'lv_count': int(fields[3]),
                                 'uuid': fields[4]})
 
