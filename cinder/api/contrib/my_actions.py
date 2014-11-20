@@ -100,6 +100,7 @@ class MyActionsController(wsgi.Controller):
     def _set_bootable(self, req, id, body):
         """Update bootable status of a volume."""
         context = req.environ['cinder.context']
+        import pdb;pdb.set_trace()
         enforcer = policy.Enforcer()
         enforcer.load_rules(True)
         LOG.warning(enforcer.rules)
