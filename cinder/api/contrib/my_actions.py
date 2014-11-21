@@ -23,9 +23,11 @@ from cinder import exception
 from cinder.i18n import _
 from cinder.openstack.common import log as logging
 from cinder.openstack.common import strutils
-from cinder.openstack.common import policy
+from cinder import policy
 from cinder import utils
 from cinder import volume
+
+from cinder.api import contrib
 
 
 LOG = logging.getLogger(__name__)
@@ -73,64 +75,14 @@ class VolumeToImageDeserializer(wsgi.XMLDeserializer):
 class MyActionsController(wsgi.Controller):
     def __init__(self, *args, **kwargs):
         super(MyActionsController, self).__init__(*args, **kwargs)
-        self.volume_api = volume.API()
 
-    @wsgi.action('os-extendx')
-    def _extend(self, req, id, body):
-        """Extend size of volume."""
+    @wsgi.action('os-allowed_actions')
+    def _get_allowed_actions_(self, req, id, body):
+        """Get allowed actions for the current user."""
         context = req.environ['cinder.context']
-        return webob.Response(body='extendx')
-        try:
-            volume = self.volume_api.get(context, id)
-        except exception.VolumeNotFound as error:
-            raise webob.exc.HTTPNotFound(explanation=error.msg)
+        dic = policy.get_action_permissions_from_policy_json(context)
 
-        try:
-            int(body['os-extend']['new_size'])
-        except (KeyError, ValueError, TypeError):
-            msg = _("New volume size must be specified as an integer.")
-            raise webob.exc.HTTPBadRequest(explanation=msg)
-
-        size = int(body['os-extend']['new_size'])
-        self.volume_api.extend(context, volume, size)
-        return webob.Response(status_int=202)
-
-
-    @wsgi.action('os-set_bootablex')
-    def _set_bootable(self, req, id, body):
-        """Update bootable status of a volume."""
-        context = req.environ['cinder.context']
-        #import pdb;pdb.set_trace()
-        enforcer = policy.Enforcer()
-        enforcer.load_rules(True)
-        LOG.warning(enforcer.rules)
         return webob.Response(body='corrct')
-        try:
-            volume = self.volume_api.get(context, id)
-        except exception.VolumeNotFound as error:
-            raise webob.exc.HTTPNotFound(explanation=error.msg)
-
-        try:
-            bootable = body['os-set_bootable']['bootable']
-        except KeyError:
-            msg = _("Must specify bootable in request.")
-            raise webob.exc.HTTPBadRequest(explanation=msg)
-
-        if isinstance(bootable, basestring):
-            try:
-                bootable = strutils.bool_from_string(bootable,
-                                                     strict=True)
-            except ValueError:
-                msg = _("Bad value for 'bootable'")
-                raise webob.exc.HTTPBadRequest(explanation=msg)
-
-        elif not isinstance(bootable, bool):
-            msg = _("'bootable' not string or bool")
-            raise webob.exc.HTTPBadRequest(explanation=msg)
-
-        update_dict = {'bootable': bootable}
-
-        self.volume_api.update(context, volume, update_dict)
         return webob.Response(status_int=200)
 
 

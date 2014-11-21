@@ -61,7 +61,6 @@ def enforce(context, action, target):
 
     """
     init()
-
     return _ENFORCER.enforce(action, target, context.to_dict(),
                              do_raise=True,
                              exc=exception.PolicyNotAuthorized,
@@ -82,3 +81,36 @@ def check_is_admin(roles):
     credentials = {'roles': roles}
 
     return _ENFORCER.enforce('context_is_admin', target, credentials)
+
+def get_action_permissions_from_policy_json(context):
+    """Parse policy.json to find allowed and forbidden actions.
+
+    Returns a dictionary. Keys are actions from policy.json, values are
+    'allowed' or 'forbidden'."""
+    #NOTE(rushiagr): no information is provided for the actions not listed in
+    # policy.json. In future, we could parse the value for the 'default' rule
+    # from policy.json and if it is a very simple rule, e.g. "",
+    # "admin_or_owner" or "nobody", we should also include key value pair of
+    # 'default' and the value that default takes. Note that we should NOT send
+    # any 'value' for any rule name, as the value can potentially contain
+    # sensitive data, e.g. "not project:%(admin_only_poc_project)"
+
+    init()
+    _ENFORCER.load_rules(force_reload=True)
+    return_dict = {}
+    for rule in _ENFORCER.rules:
+        # If rule doesn't contain a ':', the rule doesn't pertain to a specific
+        # API, e.g. 'default'
+        if rule.find(':') == -1:
+            continue
+
+        action_permission = 'allowed'
+        try:
+            enforce_action(context, rule)
+            action_permission = 'forbidden'
+        except exception.PolicyNotAuthorized:
+            pass
+
+        return_dict[rule] = action_permission
+
+    return return_dict
