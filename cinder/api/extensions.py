@@ -311,7 +311,7 @@ class ResourceExtension(object):
 
 def load_standard_extensions(ext_mgr, logger, path, package, ext_list=None):
     """Registers all standard API extensions."""
-    import pdb;pdb.set_trace()
+    #import pdb;pdb.set_trace()
     # Walk through all the modules in our directory...
     our_dir = path[0]
     for dirpath, dirnames, filenames in os.walk(our_dir):
